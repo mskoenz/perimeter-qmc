@@ -5,6 +5,8 @@
 #ifndef __GRID_CLASS_HEADER
 #define __GRID_CLASS_HEADER
 
+#include <site_struct.hpp>
+
 #include <boost/integer.hpp>
 #include <boost/multi_array.hpp>
 
@@ -61,8 +63,7 @@ namespace perimeter {
               , lookup_L_fwd(new std::vector<index_type>(L_, index_type()))
               , lookup_H_rev(new std::vector<index_type>(H_, index_type()))
               , lookup_L_rev(new std::vector<index_type>(L_, index_type()))
-              , grid_(new boost::multi_array<grid_type,2>(boost::extents[H_][L_]))
-        {
+              , grid_(new boost::multi_array<grid_type,2>(boost::extents[H_][L_])) {
             index_type i = 1;
             //here the periodic boundaries are set up
             std::for_each(lookup_H_fwd->begin(), lookup_H_fwd->end(), [&](index_type & ind) {ind = i%H_; ++i;});
@@ -136,7 +137,7 @@ namespace perimeter {
             {
                 for(index_type j = 0; j < L_; ++j)
                 {
-                    in = (*grid_)[i][j].string_print();
+                    in = (*grid_)[i][j].string_print(L_);
                     for(index_type k = 0; k < kmax; ++k)
                     {
                         s[i * kmax + k][j] = in[k];
@@ -145,6 +146,10 @@ namespace perimeter {
             }
             for(index_type i = 0; i < H_ * kmax; ++i)
             {
+                if(qmc::n_bonds == 6)
+                    for(index_type j = 0; j < H_*kmax - i; ++j)
+                        os << " ";
+                    
                 for(index_type j = 0; j < L_; ++j)
                     os << s[i][j];
                 os << std::endl;

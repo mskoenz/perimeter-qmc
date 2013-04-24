@@ -8,9 +8,12 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <vector>
+
 #include <boost/integer.hpp>
 #include <addons/color.hpp>
 
+//perimeter is documented in grid_class.hpp
 namespace perimeter {
     namespace qmc
     {
@@ -24,9 +27,12 @@ namespace perimeter {
               start = 0
             , down = 0
             , right
+            , diag_down
+            , diag_up
             , left
             , up
             , n_bonds
+            , hori
             , none
             , invert = up //has to be the last item before n_bonds
         };
@@ -58,18 +64,62 @@ namespace perimeter {
                         res << no;
             return res.str();
         }
-        std::vector<std::string> const string_print() const {
+        std::vector<std::string> const string_print(uint const & L) const {
             std::vector<std::string> res;
             std::stringstream os;
-            os << " " << std::setw(1) << (int(loop/100) == 0 ? ' ' : char('0' + int(loop/100))) << print_bond(qmc::up, "|", "") << std::setw(2) << std::setfill('0') << loop%100 << std::setfill(' ') << print_bond(qmc::up, "", " ");
-            res.push_back(os.str());
-            os.str("");//reset ss
-            os << print_bond(qmc::left, "--", "  ") << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::right, "--", "  ");
-            res.push_back(os.str());
-            os.str("");//reset ss
-            os << "  " << print_bond(qmc::down, "|", " ") << "  ";
-            res.push_back(os.str());
-            return res;
+            
+            if(qmc::n_bonds == 4) {
+                os << "  " << print_bond(qmc::up, "|", "") << std::left << std::setw(3) << loop%1000 << std::right << print_bond(qmc::up, "", " ");
+                res.push_back(os.str()); 
+                os.str("");//reset ss
+                os << print_bond(qmc::left, "--", "  ") << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::right, "---", "   ");
+                res.push_back(os.str());
+                os.str("");//reset ss
+                os << "  " << print_bond(qmc::down, "|", " ") << " " << "  ";
+                res.push_back(os.str());
+                return res;
+            }
+            if(qmc::n_bonds == 6) {
+                os << print_bond(qmc::diag_up, "\\", " ") << " " << print_bond(qmc::up, "/", "") << std::left << std::setw(3) << loop%1000 << std::right << print_bond(qmc::up, "", " ");
+                res.push_back(os.str()); 
+                os.str("");//reset ss
+                os << print_bond(qmc::left, "--", "  ") << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::right, "---", "   ");
+                res.push_back(os.str());
+                os.str("");//reset ss
+                os << "  " << print_bond(qmc::down, "/", " ") << " " << print_bond(qmc::diag_down, "\\ ", "  ");
+                res.push_back(os.str());
+                return res;
+            }
+            if(qmc::n_bonds == 3) {
+                static uint alternate = true;
+                
+                if(alternate%2) {
+                    os << "    " << print_bond(qmc::up, "\\", " ") << "    ";
+                    res.push_back(os.str()); 
+                    os.str("");//reset ss
+                    os << " " << std::setw(3) << loop%1000 << " " << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::hori, "---", "   ");
+                    res.push_back(os.str());
+                    os.str("");//reset ss
+                    os << "    " << print_bond(qmc::down, "/", " ") << "    ";
+                    res.push_back(os.str());
+                }
+                else {
+                    os << "   " << print_bond(qmc::up, "/", " ") << "     ";
+                    res.push_back(os.str()); 
+                    os.str("");//reset ss
+                    os << print_bond(qmc::hori, "--", "  ") << (spin == 0 ? BLUEB : REDB) << spin << NONE << " " << std::left << std::setw(3) << loop%1000 << std::right << "  ";
+                    res.push_back(os.str());
+                    os.str("");//reset ss
+                    os << "   " << print_bond(qmc::down, "\\", " ") << "     ";
+                    res.push_back(os.str());
+                }
+                ++alternate;
+                if(alternate % (L + 1) == 0)
+                    ++alternate;
+                return res;
+            }
+            
+            
         }
         constexpr static const uint print_site_height() {
             return 3;
