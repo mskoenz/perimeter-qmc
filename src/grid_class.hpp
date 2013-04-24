@@ -40,7 +40,7 @@ namespace perimeter {
         
         ///  the container where the index-lookup is stored in
         ///  \sa lookup_L_
-        template<typename U> 
+        template<typename U>
         using vector_type = std::vector<U>;
         
         ///  again a shared pointer since multiple instances can share the index-lookup
