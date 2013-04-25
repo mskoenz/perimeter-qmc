@@ -21,29 +21,40 @@ namespace perimeter {
               bra = 0
             , ket
             , n_states
+            , invert_state = ket
         };
         
         enum bond_enum {
               start = 0
             , down = 0
-            , left
             , right
+            , diag_down
+            , diag_up
+            , left
             , up
             , n_bonds
             , hori
-            , diag_down
-            , diag_up
             , none
-            , invert = up //has to be the last item before n_bonds
+            , invert_bond = up //has to be the last item before n_bonds
         };
+        enum spin_enum
+        {
+            beta = 0
+            , alpha
+            , n_spins
+            , invert_spin = alpha
+        };
+        
     }
     
     struct site_struct {
         typedef int spin_type;
-        typedef int loop_type;
+        typedef uint loop_type;
         typedef uint bond_type;
-
-        site_struct(): spin(0), loop(0), bond{qmc::none, qmc::none}, check(0) {
+        typedef uint8_t check_type;
+        typedef uint state_type;
+        
+        site_struct(): spin(qmc::beta), loop(0), bond{qmc::none, qmc::none}, check(0) {
         }
         site_struct(spin_type const spin): spin(spin), loop(0), bond{qmc::none, qmc::none}, check(0) {
         }
@@ -133,7 +144,7 @@ namespace perimeter {
         loop_type loop;
         bond_type bond[qmc::n_states];
         site_struct * neighbor[qmc::n_bonds];
-        uint8_t check;
+        check_type check;
     };
     
     std::ostream & operator<<(std::ostream & os, site_struct const & site) {

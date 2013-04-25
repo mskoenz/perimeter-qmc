@@ -17,6 +17,9 @@
 #include <algorithm>
 #include <typeinfo>
 
+#define DEBUG_VAR(x) std::cout << "\033[1;31m" << "  DEBUG_VAR: " << "\033[0;31m" << #x << " = " << x << "\033[0m" << std::endl;
+#define DEBUG_MSG(x) std::cout << "\033[1;31m" << "  DEBUG_MSG: " << "\033[0;31m" << x << "\033[0m" << std::endl;
+
 ///  \brief where all the physics happens
 ///  
 ///  
@@ -25,9 +28,10 @@ namespace perimeter {
     ///
     ///
     class grid_class { //grid is shorter than lattice ; 
+    public:
         ///  the type of the sites
-        typedef site_struct grid_type;
-        
+        typedef site_struct site_type;
+    private:
         ///  the array where the sites are stored in
         template<typename U> 
         using array_type = boost::multi_array<U,2>;
@@ -35,15 +39,20 @@ namespace perimeter {
         template<typename U> 
         using vector_type = std::vector<U>;
         
+        typedef typename site_type::loop_type loop_type;
+        typedef typename site_type::check_type check_type;
+        typedef typename site_type::state_type state_type;
+        typedef typename site_type::bond_type bond_type;
     public:
-        typedef typename vector_type<grid_type>::size_type index_type;
+        typedef typename vector_type<site_type>::size_type index_type;
         ///standart constructor
         ///@param H height of the grid
         ///@param L length of the grid
         inline grid_class(uint const H, uint const L, uint const init = 0): 
                 H_(H)
               , L_(L)
-              , grid_(boost::extents[H_][L_]) {
+              , grid_(boost::extents[H_][L_]) 
+              , n_loops_(loop_type()) {
             assert(H_%2==0);
             assert(L_%2==0);
             assert(H_>0);
@@ -59,8 +68,8 @@ namespace perimeter {
             assert(L_>0);
             int state = 0;
             std::for_each(begin(), end(), 
-                [&](site_struct & s) {
-                    s.spin = (state + state / L_)%2;
+                [&](site_type & s) {
+                    s.spin = (state + state / L_)%2 == 0 ? qmc::beta : qmc::alpha;
                     if(init == 0) {
                         
                         if(qmc::n_bonds == 3) {
@@ -114,39 +123,117 @@ namespace perimeter {
         }
         
         void init_loops() {
-            uint8_t check_level = grid_[0][0].check + 1;
-            uint loop_var = 0;
+            if(n_loops_ != 0) {//can only be called once at the start
+                throw std::runtime_error("init_loops() can only be called once");
+                return;
+            }
+            
+            check_type const level = 1;
+            loop_type loop_var = 0;
             
             std::for_each(begin(), end(), 
-                [&](site_struct & s) {
-                    if(s.check != check_level)
+                [&](site_type & s) {
+                    if(s.check != level)
                     {
-                        ++(s.check);
-                        s.loop = loop_var;
-                        site_struct * next = next_in_loop(&s);
-                        while(next->check != check_level) {
-                            ++(next->check);
-                            next->loop = loop_var;
-                            next = next_in_loop(next);
-                        };
+                        follow_loop(&s, loop_var);
                         ++loop_var;
                     }
                 }
             );
+            clear_check();
         }
         
-        site_struct * next_in_loop(site_struct * in) {
-            static bool alternator = true;
-            alternator = !alternator;
+        void clear_check(){
+            std::for_each(begin(), end(), 
+                [&](site_type & s) {
+                    --(s.check);
+                }
+            );
+        }
+        
+        void follow_loop(site_type * start, loop_type const & loop_var) {
+            site_type * next = start;
+            do {
+                ++(next->check);
+                next->loop = loop_var;
+                next = next_in_loop(next);
+            } while(next != start);
+        }
+        
+        void follow_loop_spin(site_type * start, bool const & flip) {
+            site_type * next = start;
+            if(flip) {
+                do {
+                    ++(next->check);
+                    next->spin = qmc::invert_spin - next->spin;
+                    next = next_in_loop(next);
+                } while(next != start);
+            } else {
+                do {
+                    ++(next->check);
+                    next = next_in_loop(next);
+                } while(next != start);
+            }
+        }
+        
+        void follow_loop_once(site_type * start, loop_type const & loop_var) {
+            site_type * next = start;
+            do {
+                next->loop = loop_var;
+                next = next_in_loop(next);
+            } while(next != start);
+        }
+        
+        site_type * next_in_loop(site_type * in) const  {
+            static state_type alternator = qmc::bra;
+            alternator = qmc::invert_state - alternator;
             return in->partner(alternator);
         }
+        
+        void two_bond_flip(site_type * target, site_type * old_partner, bond_type b, state_type state) {
+            //target node shows in the dircetion of the neighbor with the same orientation
+            target->bond[state] = b;
+            //old partner does the same
+            old_partner->bond[state] = b;
+            //the new partner of the target bond shows in the targets direction
+            target->neighbor[b]->bond[state] = qmc::invert_bond - b;
+            //old partner of the new partner does the same
+            old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
+        }
+        
+        void two_bond_split(site_type * target, site_type * old_partner, bond_type b, state_type state) {
+            two_bond_flip(target, old_partner, b, state);
+            //rename after split
+            follow_loop_once(old_partner, available_.back());
+            available_.pop_back();
+            ++n_loops_;
+        }
+        
+        void two_bond_join(site_type * target, site_type * old_partner, bond_type b, state_type state) {
+            //rename before join
+            available_.push_back(target->neighbor[b]->loop);
+            --n_loops_;
+            follow_loop_once(target->neighbor[b], target->loop);
+            
+            two_bond_flip(target, old_partner, b, state);
+        }
+        
+        bond_type two_bond_update_site(site_type const & target, state_type state) const {
+            for(bond_type b = qmc::start; b < qmc::n_bonds; ++b) {
+                if(target.bond[state] == target.neighbor[b]->bond[state]) {
+                    return b;
+                }
+            }
+            return qmc::none;
+        }
+        
         ///  returns a reference to the site (i, j)
         ///  @param i index for the height
         ///  @param j index for the lenght
-        grid_type & operator()(index_type const i, index_type const j) {
+        site_type & operator()(index_type const i, index_type const j) {
             return grid_[i][j];
         }
-        grid_type const & operator()(index_type const i, index_type const j) const {
+        site_type const & operator()(index_type const i, index_type const j) const {
             return grid_[i][j];
         }
         
@@ -164,7 +251,7 @@ namespace perimeter {
         }
         
         void print_all(std::ostream & os = std::cout) const {
-            const uint kmax = grid_type::print_site_height();
+            const uint kmax = site_type::print_site_height();
             
             array_type<std::string> s(boost::extents[kmax * H_][L_]);
             vector_type<std::string> in;
@@ -192,18 +279,21 @@ namespace perimeter {
         }
         
         ///  \brief can be used to traverse the array
-        grid_type * begin() {
+        site_type * begin() {
             return grid_.data();
         }
         
         ///  \brief can be used to traverse the array
-        grid_type * end() {
+        site_type * end() {
             return grid_.data() + grid_.num_elements();
         }
     private:
         uint const H_; ///<height
         uint const L_; ///<length
-        array_type<grid_type> grid_;            ///< the actual grid
+        array_type<site_type> grid_;            ///< the actual grid
+        
+        loop_type n_loops_;
+        std::vector<loop_type> available_;
     };
 }//end namespace perimeter
 #endif //__GRID_CLASS_HEADER

@@ -27,19 +27,34 @@ int main(int argc, char* argv[])
     addon::parameter.read(argc, argv);
     
     sim_class s(addon::parameter.get());
-    int h = -1;
-    int l = 0;
-    int st = 0;
-    s.grid().print_all();
-    while(h != -1)
-    {
-        std::cout << "nr s: " << std::endl;
+    
+    //~ int h = -1;
+    //~ int h = 0;
+    //~ int l = 0;
+    //~ int st = 0;
+    //~ s.grid().print_all();
+    //~ while(h != -1)
+    //~ {
+        //~ std::cout << "h l s: " << std::endl;
         //~ std::cin >> h;
         //~ std::cin >> l;
+        //~ std::cin >> st;
+        //~ s.two_bond_update(h, l, st);
+        //~ s.spin_update();
+        //~ s.grid().print_all();
+    //~ }
+    
+    int nr = -1;
+    //~ int nr = 0;
+    int st = 0;
+    s.grid().print_all();
+    while(nr != -1)
+    {
+        std::cout << "nr s: " << std::endl;
+        std::cin >> nr;
         std::cin >> st;
-        //~ s.two_bond_update(int(nr / int(L)), nr%int(L), (st == 0 ? qmc::bra : qmc::ket));
-        s.two_bond_update(h, l, st);
-        s.grid().print();
+        s.two_bond_update(int(nr / int(L)), nr%int(L), (st == 0 ? qmc::bra : qmc::ket));
+        s.spin_update();
         s.grid().print_all();
     }
         

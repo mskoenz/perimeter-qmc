@@ -18,7 +18,12 @@
 namespace perimeter
 {
     class sim_class {
-        typedef grid_class::index_type index_type;
+        typedef typename grid_class::index_type index_type;
+        typedef typename grid_class::site_type site_type;
+        typedef typename grid_class::site_type::spin_type spin_type;
+        typedef typename grid_class::site_type::state_type state_type;
+        typedef typename grid_class::site_type::bond_type bond_type;
+        typedef typename grid_class::site_type::check_type check_type;
     public:
         sim_class(std::map<std::string, double> param):   H_(param["-H"])
                                                         , L_(param["-L"])
@@ -29,22 +34,38 @@ namespace perimeter
                 std::cout << in->first << " = " << in->second << std::endl;
         }
         
-        bool two_bond_update(index_type i, index_type j, uint state) {
+        bool two_bond_update(index_type i, index_type j, state_type state) {
             
-            for(uint b = qmc::start; b < qmc::n_bonds; ++b) {
-                if(grid_(i, j).bond[state] == grid_(i, j).neighbor[b]->bond[state]) {
-                    uint dir = grid_(i, j).bond[state];
-                    
-                    grid_(i, j).bond[state] = b;
-                    grid_(i, j).neighbor[dir]->bond[state] = b;
-                    
-                    grid_(i, j).neighbor[b]->bond[state] = qmc::invert - b;
-                    grid_(i, j).neighbor[b]->neighbor[dir]->bond[state] = qmc::invert - b;
-                    
-                    return true;
-                }
+            site_type & target = grid_(i, j);
+            
+            bond_type const b = grid_.two_bond_update_site(target, state);
+            
+            if(b != qmc::none) {
+                bond_type & dir = target.bond[state];
+                if(target.loop == target.neighbor[b]->loop)
+                    grid_.two_bond_split(&target, target.neighbor[dir], b, state);
+                else
+                    grid_.two_bond_join(&target, target.neighbor[dir], b, state);
+                return true;
             }
             return false;
+        }
+        
+        void spin_update() {
+            check_type const level = 1;
+            bool flip;
+            
+            std::for_each(grid_.begin(), grid_.end(), 
+                [&](site_type & s) {
+                    if(s.check != level)
+                    {
+                        //TODO: rng()
+                        flip = 1 > 0 ? true : false;
+                        grid_.follow_loop_spin(&s, flip);
+                    }
+                }
+            );
+            grid_.clear_check();
         }
         
         void update() {
