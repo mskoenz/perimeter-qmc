@@ -136,8 +136,8 @@ namespace addon
             ///  remaps the native random uint32_t to a double in [0, 1)
             template<typename U>
             struct impl_picker<mersenne, U> {
-                inline double operator()(double const r) {
-                    return r/uint32_t(-1);
+                inline double operator()(double  const r) {
+                    return r/double(uint32_t(-1) + double(1)); //+ 1!!! otherwise 1 can be reached
                 }
             };
             ///  \brief spec fo fast_mersenne
@@ -146,7 +146,7 @@ namespace addon
             template<typename U>
             struct impl_picker<mersenne_fast, U> {
                 inline double operator()(double const r) {
-                    return r/uint32_t(-1);
+                    return r/double(uint32_t(-1) + double(1)); //+ 1!!! otherwise 1 can be reached
                 }
             };
             

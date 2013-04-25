@@ -1,5 +1,6 @@
 FOREACH (name   measure_periodic_access
                 grid_playground
+                grid_performance_test
                 rng_example
     )
     add_executable(${name} ${name}.cpp)

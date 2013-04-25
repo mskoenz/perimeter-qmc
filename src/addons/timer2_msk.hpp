@@ -114,6 +114,7 @@ namespace addon {
                                                             , last_print_(0)
                                                             , last_i_(0)
                                                             , mod_(2)
+                                                            , loop_time_(0)
                                                             {}
         ///  \brief the destructor
         ///  
@@ -134,6 +135,11 @@ namespace addon {
         operator double() {
             return timer_.elapsed().user / 1000000000.0;
         }
+        ///  \brief returns the last mesured loop-time in [us]
+        double loop_time() {
+            return loop_time_;
+        }
+        
         ///  \brief name the data
         ///  
         ///  the names cannot contain spaces. a runtime_error will be thrown is so.
@@ -199,9 +205,10 @@ namespace addon {
                         
                     last_print_ = e;
                     last_i_ = i;
+                    loop_time_ = (e * 1000000) / i;
                     double p = double(i) / work_;
                     std::cout   << "progress: " << REDB << std::setprecision(4) << std::setw(3) << 100 * p << "% " << NONE
-                                << "  freq: " << std::setw(10) << std::setprecision(4) << i / e 
+                                << "  loop-time: " << std::setw(7) << std::setprecision(4) << loop_time_ << " us"
                                 << "  mod: " << std::setw(10) << mod_ 
                                 << "  left: " << GREENB << std::setfill('0') << std::setw(2) << int((1-p)/p*e)/3600 << ":"
                                 << std::setw(2) << (int((1-p)/p*e)/60)%60 << ":"
@@ -386,6 +393,8 @@ namespace addon {
         double last_print_;
         double last_i_;
         uint64_t mod_;
+        
+        double loop_time_;
     };
 }//end namespace addon
 #endif //__TIMER2_MSK_HEADER

@@ -1,0 +1,47 @@
+T == int
+
+25.04.13 at 08:29:48   access only array_ptr  Time[s]: 19.44  ns-per-lookup: 0.379688  
+
+25.04.13 at 08:30:11   access only array_ptr  Time[s]: 19.57  ns-per-lookup: 0.382227  
+
+25.04.13 at 08:42:39   acces only array  Time[s]: 17.96  ns-per-lookup: 0.350781  
+
+25.04.13 at 08:43:03   acces only array  Time[s]: 17.9  ns-per-lookup: 0.349609  
+
+25.04.13 at 08:45:00   access only array_ptr  Time[s]: 19.44  ns-per-lookup: 0.379688  
+
+25.04.13 at 08:49:39   neighbor only all_ptr  Time[s]: 88.78  ns-per-lookup: 1.73398  
+
+25.04.13 at 08:54:11   neighbor only no_ptr  Time[s]: 109.14  ns-per-lookup: 2.13164  wtf
+
+25.04.13 at 08:55:55   neighbor only no_ptr + const getter  Time[s]: 10.99  ns-per-lookup: 2.14648  
+
+25.04.13 at 08:57:44   neighbor only array + vec_ptr + const getter  Time[s]: 9.12  ns-per-lookup: 1.78125
+
+hex until here, square from here
+
+T == site_struct
+
+25.04.13 at 09:09:09   neighbor only array vec_ptr + const getter + site-neighbor  Time[s]: 7.72  ns-per-lookup: 1.50781  
+
+25.04.13 at 09:09:44   neighbor only array vec_ptr + const getter + site-neighbor  Time[s]: 7.72  ns-per-lookup: 1.50781
+
+25.04.13 at 09:10:58   neighbor only array vec_ptr + const getter + lookup  Time[s]: 14.71  ns-per-lookup: 2.87305  
+
+25.04.13 at 09:12:13   access only array vec_ptr + const getter + lookup  Time[s]: 4.02  ns-per-lookup: 0.785156  
+
+25.04.13 at 09:13:13   access only array vec_ptr + const getter + lookup  Time[s]: 40.43  ns-per-lookup: 0.789648  
+
+25.04.13 at 09:16:42   neighbor only array_ptr vec_ptr + const getter + lookup  Time[s]: 16.15  ns-per-lookup: 3.1543  
+
+25.04.13 at 09:18:01   neighbor only array_ptr vec_ptr + const getter + site-ptr  Time[s]: 9.14  ns-per-lookup: 1.78516  
+
+25.04.13 at 09:21:27   neighbor only array_ptr vec + const getter + lookup  Time[s]: 14.16  ns-per-lookup: 2.76562
+
+25.04.13 at 09:23:38   neighbor only array vec + const getter + lookup  Time[s]: 13.51  ns-per-lookup: 2.63867  
+
+25.04.13 at 09:24:27   neighbor only array vec + const getter + site-ptr  Time[s]: 7.71  ns-per-lookup: 1.50586  
+
+25.04.13 at 09:35:45   neighbor only array vec + const getter + site-ptr-this  Time[s]: 7.75  ns-per-lookup: 1.51367  
+
+25.04.13 at 09:44:56   neighbor only array vec + const getter + const-site-ptr-this  Time[s]: 7.67  ns-per-lookup: 1.49805  

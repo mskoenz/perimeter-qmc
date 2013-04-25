@@ -17,9 +17,6 @@
 #include <algorithm>
 #include <typeinfo>
 
-#define DEBUG_VAR(x) std::cout << "\033[1;31m" << "  DEBUG_VAR: " << "\033[0;31m" << #x << " = " << x << "\033[0m" << std::endl;
-#define DEBUG_MSG(x) std::cout << "\033[1;31m" << "  DEBUG_MSG: " << "\033[0;31m" << x << "\033[0m" << std::endl;
-
 ///  \brief where all the physics happens
 ///  
 ///  
@@ -204,9 +201,25 @@ namespace perimeter {
         void two_bond_split(site_type * target, site_type * old_partner, bond_type b, state_type state) {
             two_bond_flip(target, old_partner, b, state);
             //rename after split
-            follow_loop_once(old_partner, available_.back());
-            available_.pop_back();
-            ++n_loops_;
+            if(qmc::n_bonds == 6) {
+                loop_type tl = target->loop;
+                
+                follow_loop_once(old_partner, available_.back());
+                if(tl == target->loop) {
+                    available_.pop_back();
+                    ++n_loops_;
+                }
+                else {
+                    //~ std::cout << "\033[1;36m" << "---strange-loop-problem---" << "\033[0m" << std::endl;
+                    
+                    available_.back() = tl;
+                }
+            }
+            else {
+                follow_loop_once(old_partner, available_.back());
+                available_.pop_back();
+                ++n_loops_;
+            }
         }
         
         void two_bond_join(site_type * target, site_type * old_partner, bond_type b, state_type state) {
@@ -220,7 +233,7 @@ namespace perimeter {
         
         bond_type two_bond_update_site(site_type const & target, state_type state) const {
             for(bond_type b = qmc::start; b < qmc::n_bonds; ++b) {
-                if(target.bond[state] == target.neighbor[b]->bond[state]) {
+                if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin != target.neighbor[b]->spin) {
                     return b;
                 }
             }

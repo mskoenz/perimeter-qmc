@@ -28,24 +28,26 @@ namespace perimeter
         sim_class(std::map<std::string, double> param):   H_(param["-H"])
                                                         , L_(param["-L"])
                                                         , param_(param)
-                                                        , grid_(H_, L_, param["-init"]) {
+                                                        , grid_(H_, L_, param["-init"]) 
+                                                        , rngS_() {
             std::cout << "Parameter" << std::endl;
             for(auto in = param_.begin(); in != param_.end(); ++in)
                 std::cout << in->first << " = " << in->second << std::endl;
         }
         
         bool two_bond_update(index_type i, index_type j, state_type state) {
-            
             site_type & target = grid_(i, j);
             
             bond_type const b = grid_.two_bond_update_site(target, state);
-            
             if(b != qmc::none) {
                 bond_type & dir = target.bond[state];
-                if(target.loop == target.neighbor[b]->loop)
+                if(target.loop == target.neighbor[b]->loop) {
                     grid_.two_bond_split(&target, target.neighbor[dir], b, state);
-                else
-                    grid_.two_bond_join(&target, target.neighbor[dir], b, state);
+                }
+                else {
+                    if(rngS_() > .5)
+                        grid_.two_bond_join(&target, target.neighbor[dir], b, state);
+                }
                 return true;
             }
             return false;
@@ -59,8 +61,7 @@ namespace perimeter
                 [&](site_type & s) {
                     if(s.check != level)
                     {
-                        //TODO: rng()
-                        flip = 1 > 0 ? true : false;
+                        flip = (rngS_() > .5);
                         grid_.follow_loop_spin(&s, flip);
                     }
                 }
@@ -88,6 +89,7 @@ namespace perimeter
         const uint L_;
         std::map<std::string, double> param_;
         grid_class grid_;
+        addon::random_class<double, addon::mersenne> rngS_;
     };
 }
 #endif //__SIM_CLASS_HEADER

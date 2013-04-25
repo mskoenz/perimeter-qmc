@@ -1,4 +1,11 @@
-#ifndef BLACK
+// Author:  Mario S. Könz <mskoenz@gmx.net>
+// Date:    25.04.2013 18:09:04 EDT
+// File:    color.hpp
+
+#ifndef __COLOR_HEADER
+#define __COLOR_HEADER
+
+#ifndef NO_COLOR
 
 #define BLACK "\033[0;30m"
 #define BLACKB "\033[1;30m"
@@ -28,4 +35,36 @@
 
 #define NONE "\033[0m" 
 
-#endif
+#else //NO_COLOR
+
+#define BLACK ""
+#define BLACKB ""
+#define RED ""
+#define REDB ""
+#define GREEN ""
+#define GREENB ""
+#define YELLOW ""
+#define YELLOWB ""
+#define BLUE ""
+#define BLUEB ""
+#define LILA ""
+#define LILAB ""
+#define TUR ""
+#define TURB ""
+#define WHITE ""
+#define WHITEB ""
+
+#define BLACKBG ""
+#define REDBG ""
+#define GREENBG ""
+#define YELLOWBG ""
+#define BLUEBG ""
+#define LILABG ""
+#define TURBG ""
+#define WHITEBG ""
+
+#define NONE "" 
+
+#endif //NO_COLOR
+
+#endif //__COLOR_HEADER

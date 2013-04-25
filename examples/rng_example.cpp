@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
     //~ typedef addon::mersenne_fast RNG;
     //~ typedef addon::fibonacci RNG;
     typedef int T;
-    uint64_t maxi = 100000000lu;
+    uint64_t maxi = 1000000000lu;
     int prefactor = 1000000;
     addon::random_class<T, RNG> rng(0, 6);
     rng.seed(0);

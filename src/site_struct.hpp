@@ -28,11 +28,11 @@ namespace perimeter {
               start = 0
             , down = 0
             , right
-            , diag_down
-            , diag_up
             , left
             , up
             , n_bonds
+            , diag_down
+            , diag_up
             , hori
             , none
             , invert_bond = up //has to be the last item before n_bonds
