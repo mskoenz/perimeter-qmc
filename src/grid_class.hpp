@@ -17,102 +17,137 @@
 #include <algorithm>
 #include <typeinfo>
 
-#define DEBUG_VAR(x) std::cout << "\033[1;31m" << "  DEBUG_VAR: " << "\033[0;31m" << #x << " = " << x << "\033[0m" << std::endl;
-
 ///  \brief where all the physics happens
 ///  
 ///  
 namespace perimeter {
-    ///  \brief universal grid class
+    ///  \brief grid class with site_struct as sites
     ///
-    ///  @param T grid_type (sites)
-    ///  
-    template<typename T>
+    ///
     class grid_class { //grid is shorter than lattice ; 
         ///  the type of the sites
-        typedef T grid_type;
+        typedef site_struct grid_type;
         
         ///  the array where the sites are stored in
         template<typename U> 
         using array_type = boost::multi_array<U,2>;
         
-        ///  a shared pointer to the actual array, since some instances can share some arrays
         template<typename U> 
-        using array_ptr_type = std::shared_ptr<array_type<U>>;
-        
-        ///  the container where the index-lookup is stored in
-        ///  \sa lookup_L_
-        template<typename U>
         using vector_type = std::vector<U>;
         
-        ///  again a shared pointer since multiple instances can share the index-lookup
-        template<typename U> 
-        using vector_ptr_type = std::shared_ptr<vector_type<U>>;
-        
     public:
-        ///  the type of the index (usualy an unsigned int)
         typedef typename vector_type<grid_type>::size_type index_type;
-        
         ///standart constructor
         ///@param H height of the grid
         ///@param L length of the grid
-        inline grid_class(uint const H, uint const L): 
+        inline grid_class(uint const H, uint const L, uint const init = 0): 
                 H_(H)
               , L_(L)
-              , lookup_H_fwd(new std::vector<index_type>(H_, index_type()))
-              , lookup_L_fwd(new std::vector<index_type>(L_, index_type()))
-              , lookup_H_rev(new std::vector<index_type>(H_, index_type()))
-              , lookup_L_rev(new std::vector<index_type>(L_, index_type()))
-              , grid_(new boost::multi_array<grid_type,2>(boost::extents[H_][L_])) {
-            index_type i = 1;
-            //here the periodic boundaries are set up
-            std::for_each(lookup_H_fwd->begin(), lookup_H_fwd->end(), [&](index_type & ind) {ind = i%H_; ++i;});
-            i = 1;
-            std::for_each(lookup_L_fwd->begin(), lookup_L_fwd->end(), [&](index_type & ind) {ind = i%L_; ++i;});
-            i = H_ - 1;
-            std::for_each(lookup_H_rev->begin(), lookup_H_rev->end(), [&](index_type & ind) {ind = i%H_; ++i;});
-            i = L_ - 1;
-            std::for_each(lookup_L_rev->begin(), lookup_L_rev->end(), [&](index_type & ind) {ind = i%L_; ++i;});
-            i = 0;
+              , grid_(boost::extents[H_][L_]) {
+            assert(H_%2==0);
+            assert(L_%2==0);
+            assert(H_>0);
+            assert(L_>0);
+            init_grid(init);
+            init_loops();
         }
-                
+        
+        void init_grid(uint const init) {
+            assert(H_%2==0);
+            assert(L_%2==0);
+            assert(H_>0);
+            assert(L_>0);
+            int state = 0;
+            std::for_each(begin(), end(), 
+                [&](site_struct & s) {
+                    s.spin = (state + state / L_)%2;
+                    if(init == 0) {
+                        
+                        if(qmc::n_bonds == 3) {
+                            s.bond[qmc::bra] = qmc::hori;
+                            s.bond[qmc::ket] = qmc::hori;
+                        }
+                        else {
+                            s.bond[qmc::bra] = (state%2==0 ? qmc::right:qmc::left);
+                            s.bond[qmc::ket] = (state%2==0 ? qmc::right:qmc::left);
+                        }
+                    }
+                    else if(init == 1) {
+                        s.bond[qmc::bra] = (state/L_%2==0 ? qmc::down:qmc::up);
+                        s.bond[qmc::ket] = (state/L_%2==0 ? qmc::down:qmc::up);
+                    }
+                    else if(init == 2) {
+                        if(qmc::n_bonds == 3) {
+                            s.bond[qmc::bra] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
+                            s.bond[qmc::ket] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
+                        }
+                        else if(qmc::n_bonds == 6) {
+                            s.bond[qmc::bra] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
+                            s.bond[qmc::ket] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
+                        }
+                    }
+
+                    s.loop = state;
+                    ++state;
+                }
+            );
+            //initialising the neighbor structure
+            for(uint i = 0; i < H_; ++i) {
+                for(uint j = 0; j < L_; ++j) {
+                    grid_[i][j].neighbor[qmc::up] = &grid_[(i+H_-1)%H_][j];
+                    grid_[i][j].neighbor[qmc::down] = &grid_[(i+1)%H_][j];
+                    
+                    if(qmc::n_bonds == 3) {
+                        grid_[i][j].neighbor[qmc::hori] = &grid_[i][(j+L_ + 1 - 2*((i+j)%2) )%L_];
+                    }
+                    else {
+                        grid_[i][j].neighbor[qmc::left] = &grid_[i][(j+L_-1)%L_];
+                        grid_[i][j].neighbor[qmc::right] = &grid_[i][(j+1)%L_];
+                    }
+                    
+                    if(qmc::n_bonds == 6) {
+                        grid_[i][j].neighbor[qmc::diag_up] = &grid_[(i+H_-1)%H_][(j+L_-1)%L_];
+                        grid_[i][j].neighbor[qmc::diag_down] = &grid_[(i+1)%H_][(j+1)%L_];
+                    }
+                }
+            }
+        }
+        
+        void init_loops() {
+            uint8_t check_level = grid_[0][0].check + 1;
+            uint loop_var = 0;
+            
+            std::for_each(begin(), end(), 
+                [&](site_struct & s) {
+                    if(s.check != check_level)
+                    {
+                        ++(s.check);
+                        s.loop = loop_var;
+                        site_struct * next = next_in_loop(&s);
+                        while(next->check != check_level) {
+                            ++(next->check);
+                            next->loop = loop_var;
+                            next = next_in_loop(next);
+                        };
+                        ++loop_var;
+                    }
+                }
+            );
+        }
+        
+        site_struct * next_in_loop(site_struct * in) {
+            static bool alternator = true;
+            alternator = !alternator;
+            return in->partner(alternator);
+        }
         ///  returns a reference to the site (i, j)
         ///  @param i index for the height
         ///  @param j index for the lenght
         grid_type & operator()(index_type const i, index_type const j) {
-            return (*grid_)[i][j];
+            return grid_[i][j];
         }
-        
-        ///  returns a reference to the lower neighbor of the site (i, j)
-        ///  @param i index for the height
-        ///  @param j index for the lenght
-        grid_type & down(index_type const i, index_type const j) {
-            //~ return *(((*grid_)[i][j]).down);
-            return (*grid_)[(*lookup_H_fwd)[i]][j];
-        }
-        
-        ///  returns a reference to the upper neighbor of the site (i, j)
-        ///  @param i index for the height
-        ///  @param j index for the lenght
-        grid_type & up(index_type const i, index_type const j) {
-            //~ return *(((*grid_)[i][j]).up);
-            return (*grid_)[(*lookup_H_rev)[i]][j];
-        }
-        
-        ///  returns a reference to the right neighbor of the site (i, j)
-        ///  @param i index for the height
-        ///  @param j index for the lenght
-        grid_type & right(index_type const i, index_type const j) {
-            //~ return *(((*grid_)[i][j]).right);
-            return (*grid_)[i][(*lookup_L_fwd)[j]];
-        }
-        
-        ///  returns a reference to the left neighbor of the site (i, j)
-        ///  @param i index for the height
-        ///  @param j index for the lenght
-        grid_type & left(index_type const i, index_type const j) {
-            //~ return *(((*grid_)[i][j]).left);
-            return (*grid_)[i][(*lookup_L_rev)[j]];
+        grid_type const & operator()(index_type const i, index_type const j) const {
+            return grid_[i][j];
         }
         
         ///  \brief print function
@@ -122,7 +157,7 @@ namespace perimeter {
             {
                 for(index_type j = 0; j < L_; ++j)
                 {
-                    os << std::setw(3) << (*grid_)[i][j] << " ";
+                    os << std::setw(3) << grid_[i][j] << " ";
                 }
                 os << std::endl;
             }
@@ -137,7 +172,7 @@ namespace perimeter {
             {
                 for(index_type j = 0; j < L_; ++j)
                 {
-                    in = (*grid_)[i][j].string_print(L_);
+                    in = grid_[i][j].string_print(L_);
                     for(index_type k = 0; k < kmax; ++k)
                     {
                         s[i * kmax + k][j] = in[k];
@@ -158,21 +193,17 @@ namespace perimeter {
         
         ///  \brief can be used to traverse the array
         grid_type * begin() {
-            return grid_->data();
+            return grid_.data();
         }
         
         ///  \brief can be used to traverse the array
         grid_type * end() {
-            return grid_->data() + grid_->num_elements();
+            return grid_.data() + grid_.num_elements();
         }
     private:
         uint const H_; ///<height
         uint const L_; ///<length
-        vector_ptr_type<index_type> lookup_H_fwd;   ///< neccesary bc of the boundary conditions (more efficient then if or mod)
-        vector_ptr_type<index_type> lookup_L_fwd;   ///< same as grid_class<T>#lookup_H_fwd
-        vector_ptr_type<index_type> lookup_H_rev;   ///< same as grid_class<T>#lookup_H_fwd
-        vector_ptr_type<index_type> lookup_L_rev;   ///< same as grid_class<T>#lookup_H_fwd
-        array_ptr_type<grid_type> grid_;            ///< the actual grid
+        array_type<grid_type> grid_;            ///< the actual grid
     };
 }//end namespace perimeter
 #endif //__GRID_CLASS_HEADER

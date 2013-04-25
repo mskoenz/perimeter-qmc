@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
     //~ typedef addon::mersenne_fast RNG;
     //~ typedef addon::fibonacci RNG;
     typedef int T;
-    uint64_t maxi = 1000000000lu;
+    uint64_t maxi = 100000000lu;
     int prefactor = 1000000;
     addon::random_class<T, RNG> rng(0, 6);
     rng.seed(0);
@@ -59,6 +59,5 @@ int main(int argc, char* argv[])
 18.04.13 at 23:40:54   rng testing  Time[s]: 4.68  rn/us: 213.675  rng: 8mersenne  type: i  
 
 18.04.13 at 23:41:00   rng testing  Time[s]: 4.67  rn/us: 214.133  rng: 8mersenne  type: i  
-
 
 */

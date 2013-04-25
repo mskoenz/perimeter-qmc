@@ -5,6 +5,7 @@
 #include <iostream>
 #include <grid_class.hpp>
 #include <addons/timer2_msk.hpp>
+#include <addons/bash_parameter2_msk.hpp>
 
 /*need to be copied into the left/right/up/down fct for measuring
 //~ return (*grid_)[(i - 1 + L_)&(H_-1)][j];
@@ -42,16 +43,15 @@ using namespace perimeter;
 
 int main(int argc, char* argv[])
 {
-    long unsigned int res = 0;
-    long unsigned int maxk = 10000000lu; // divide by 100 for O2
-    uint H = 16;
-    uint L = 8;
-    grid_class<int> g(H, L);
-    int i = 0;
-    std::for_each(g.begin(), g.end(), [&](int & g) {g = i++;});
-    g.print();
+    double H = 16;
+    double L = 8;
     
-    addon::timer_class<addon::normal> timer;
+    long unsigned int res = 0;
+    long unsigned int maxk = 10000000lu; // divide by 100 for O0
+    
+    grid_class g(H, L);
+    
+    addon::timer_class<addon::normal> timer(maxk);
     timer.set_names("ns-per-lookup");
     for(uint k = 0; k < maxk; ++k)
     {
@@ -63,15 +63,16 @@ int main(int argc, char* argv[])
                 res += 59;
                 res += 60;
                 res += 60;
-                //~ res += g.up(i, j);
-                //~ res += g.down(i, j);
-                //~ res += g.left(i, j);
-                //~ res += g.right(i, j);
+                //~ res += g(i, j).loop;
+                //~ res += g(i, j).loop;
+                //~ res += g(i, j).loop;
+                //~ res += g(i, j).loop;
             }
         }
+        timer.progress(k);
     }
     std::cout << res << std::endl;
-    timer.set_comment("addition O3");
+    timer.set_comment("new test");
     timer.print(timer.elapsed() * 1000 * 1000 * 1000.0 / (maxk * L * H * 4));
     timer.write(timer.elapsed() * 1000 * 1000 * 1000.0 / (maxk * L * H * 4));
     return 0;

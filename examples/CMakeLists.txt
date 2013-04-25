@@ -1,5 +1,4 @@
 FOREACH (name   measure_periodic_access
-                measure_periodic_access_2
                 grid_playground
                 rng_example
     )

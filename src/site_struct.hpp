@@ -26,13 +26,13 @@ namespace perimeter {
         enum bond_enum {
               start = 0
             , down = 0
-            , right
-            , diag_down
-            , diag_up
             , left
+            , right
             , up
             , n_bonds
             , hori
+            , diag_down
+            , diag_up
             , none
             , invert = up //has to be the last item before n_bonds
         };
@@ -43,12 +43,16 @@ namespace perimeter {
         typedef int loop_type;
         typedef uint bond_type;
 
-        site_struct(): spin(0), loop(0), bond{qmc::none, qmc::none} {
+        site_struct(): spin(0), loop(0), bond{qmc::none, qmc::none}, check(0) {
         }
-        site_struct(spin_type const spin): spin(spin), loop(0), bond{qmc::none, qmc::none} {
+        site_struct(spin_type const spin): spin(spin), loop(0), bond{qmc::none, qmc::none}, check(0) {
+        }
+        site_struct * partner(bond_type const state) {
+            return neighbor[bond[state]];
         }
         void print(std::ostream & os = std::cout) const {
-            os << spin;
+            //~ os << spin;
+            os << int(check);
         }
         std::string print_bond(qmc::bond_enum b, std::string go, std::string no) const {
             std::stringstream res;
@@ -129,6 +133,7 @@ namespace perimeter {
         loop_type loop;
         bond_type bond[qmc::n_states];
         site_struct * neighbor[qmc::n_bonds];
+        uint8_t check;
     };
     
     std::ostream & operator<<(std::ostream & os, site_struct const & site) {

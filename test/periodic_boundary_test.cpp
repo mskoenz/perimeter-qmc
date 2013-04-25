@@ -10,19 +10,21 @@ using namespace perimeter;
 
 int main(int argc, char* argv[])
 {
-    grid_class<int> g(12, 10);
+    grid_class g(12, 10);
     g.print();
     int i = 0;
-    std::for_each(g.begin(), g.end(), [&](int & g) {g = i++;});
+    std::for_each(g.begin(), g.end(), [&](site_struct & g) {g.spin = i++;});
     
-    if(g.up(0, 0) != 110)
-        return 1;
-    if(g.down(0, 0) != 10)
-        return 1;
-    if(g.left(0, 0) != 9)
-        return 1;
-    if(g.right(0, 0) != 1)
-        return 1;
+    if(qmc::n_bonds == 4) {
+        if(g(0, 0).neighbor[qmc::up]->spin != 110)
+            return 1;
+        if(g(0, 0).neighbor[qmc::down]->spin != 10)
+            return 1;
+        if(g(0, 0).neighbor[qmc::left]->spin != 9)
+            return 1;
+        if(g(0, 0).neighbor[qmc::right]->spin != 1)
+            return 1;
+    }
         
     return 0;
 }
