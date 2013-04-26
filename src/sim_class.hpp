@@ -55,7 +55,7 @@ namespace perimeter
             return false;
         }
         
-        void spin_update() {
+        void spin_update(state_type const & bra) {
             check_type const level = 1;
             bool flip;
             
@@ -64,7 +64,7 @@ namespace perimeter
                     if(s.check != level)
                     {
                         flip = (rngS_() > .5);
-                        grid_.follow_loop_spin(&s, flip);
+                        grid_.follow_loop_spin(&s, flip, bra);
                     }
                 }
             );

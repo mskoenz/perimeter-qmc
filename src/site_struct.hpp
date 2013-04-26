@@ -20,9 +20,16 @@ namespace perimeter {
         enum state_enum {
               bra = 0
             , bra2
+            //~ , bra3
+            //~ , bra4
+            //~ , bra5
+            //~ , ket5
+            //~ , ket4
+            //~ , ket3
             , ket2
             , ket
             , n_states
+            , n_bra = n_states/2
             , invert_state = n_states - 1
         };
         
@@ -56,16 +63,27 @@ namespace perimeter {
         typedef uint8_t check_type;
         typedef uint state_type;
         
-        site_struct(): spin(qmc::beta), loop(0), bond{qmc::none, qmc::none}, check(0) {
+        site_struct(): check(0) {
+            for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
+                loop[bra] = 0;
+                spin[bra] = qmc::beta;
+                bond[bra] = qmc::none;
+                bond[qmc::invert_state - bra] = qmc::none;
+            }
         }
-        site_struct(spin_type const spin): spin(spin), loop(0), bond{qmc::none, qmc::none}, check(0) {
+        site_struct(spin_type const & spin_in): check(0) {
+            for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
+                loop[bra] = 0;
+                spin[bra] = spin_in;
+                bond[bra] = qmc::none;
+                bond[qmc::invert_state - bra] = qmc::none;
+            }
         }
         site_struct * partner(bond_type const state) {
             return neighbor[bond[state]];
         }
-        void print(std::ostream & os = std::cout) const {
-            //~ os << spin;
-            os << int(check);
+        void print(state_type const & s12 = qmc::start, std::ostream & os = std::cout) const {
+            os << spin[s12];
         }
         std::string print_bond(qmc::bond_enum b, std::string go, std::string no, state_type const & s1) const {
             std::stringstream res;
@@ -83,29 +101,29 @@ namespace perimeter {
                         res << no;
             return res.str();
         }
-        std::vector<std::string> const string_print(uint const & L, state_type const & st) const {
+        std::vector<std::string> const string_print(uint const & L, state_type const & s1) const {
             std::vector<std::string> res;
             std::stringstream os;
             
             if(qmc::n_bonds == 4) {
-                os << "  " << print_bond(qmc::up, "|", "", st) << std::left << std::setw(3) << loop%1000 << std::right << print_bond(qmc::up, "", " ", st);
+                os << "  " << print_bond(qmc::up, "|", "", s1) << std::left << std::setw(3) << loop[s1]%1000 << std::right << print_bond(qmc::up, "", " ", s1);
                 res.push_back(os.str()); 
                 os.str("");//reset ss
-                os << print_bond(qmc::left, "--", "  ", st) << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::right, "---", "   ", st);
+                os << print_bond(qmc::left, "--", "  ", s1) << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE << print_bond(qmc::right, "---", "   ", s1);
                 res.push_back(os.str());
                 os.str("");//reset ss
-                os << "  " << print_bond(qmc::down, "|", " ", st) << " " << "  ";
+                os << "  " << print_bond(qmc::down, "|", " ", s1) << " " << "  ";
                 res.push_back(os.str());
                 return res;
             }
             if(qmc::n_bonds == 6) {
-                os << print_bond(qmc::diag_up, "\\", " ", st) << " " << print_bond(qmc::up, "/", "", st) << std::left << std::setw(3) << loop%1000 << std::right << print_bond(qmc::up, "", " ", st);
+                os << print_bond(qmc::diag_up, "\\", " ", s1) << " " << print_bond(qmc::up, "/", "", s1) << std::left << std::setw(3) << loop[s1]%1000 << std::right << print_bond(qmc::up, "", " ", s1);
                 res.push_back(os.str()); 
                 os.str("");//reset ss
-                os << print_bond(qmc::left, "--", "  ", st) << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::right, "---", "   ", st);
+                os << print_bond(qmc::left, "--", "  ", s1) << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE << print_bond(qmc::right, "---", "   ", s1);
                 res.push_back(os.str());
                 os.str("");//reset ss
-                os << "  " << print_bond(qmc::down, "/", " ", st) << " " << print_bond(qmc::diag_down, "\\ ", "  ", st);
+                os << "  " << print_bond(qmc::down, "/", " ", s1) << " " << print_bond(qmc::diag_down, "\\ ", "  ", s1);
                 res.push_back(os.str());
                 return res;
             }
@@ -113,23 +131,23 @@ namespace perimeter {
                 static uint alternate = true;
                 
                 if(alternate%2) {
-                    os << "    " << print_bond(qmc::up, "\\", " ", st) << "    ";
+                    os << "    " << print_bond(qmc::up, "\\", " ", s1) << "    ";
                     res.push_back(os.str()); 
                     os.str("");//reset ss
-                    os << " " << std::setw(3) << loop%1000 << " " << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::hori, "---", "   ", st);
+                    os << " " << std::setw(3) << loop[s1]%1000 << " " << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE << print_bond(qmc::hori, "---", "   ", s1);
                     res.push_back(os.str());
                     os.str("");//reset ss
-                    os << "    " << print_bond(qmc::down, "/", " ", st) << "    ";
+                    os << "    " << print_bond(qmc::down, "/", " ", s1) << "    ";
                     res.push_back(os.str());
                 }
                 else {
-                    os << "   " << print_bond(qmc::up, "/", " ", st) << "     ";
+                    os << "   " << print_bond(qmc::up, "/", " ", s1) << "     ";
                     res.push_back(os.str()); 
                     os.str("");//reset ss
-                    os << print_bond(qmc::hori, "--", "  ", st) << (spin == 0 ? BLUEB : REDB) << spin << NONE << " " << std::left << std::setw(3) << loop%1000 << std::right << "  ";
+                    os << print_bond(qmc::hori, "--", "  ", s1) << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE << " " << std::left << std::setw(3) << loop[s1]%1000 << std::right << "  ";
                     res.push_back(os.str());
                     os.str("");//reset ss
-                    os << "   " << print_bond(qmc::down, "\\", " ", st) << "     ";
+                    os << "   " << print_bond(qmc::down, "\\", " ", s1) << "     ";
                     res.push_back(os.str());
                 }
                 ++alternate;
@@ -144,15 +162,15 @@ namespace perimeter {
             return 3;
         }
         
-        spin_type spin;
-        loop_type loop;
+        spin_type spin[qmc::n_bra];
+        loop_type loop[qmc::n_bra];
         bond_type bond[qmc::n_states];
         site_struct * neighbor[qmc::n_bonds];
         check_type check;
     };
     
     std::ostream & operator<<(std::ostream & os, site_struct const & site) {
-        site.print(os);
+        site.print(qmc::start, os);
         return os;
     }
 }//end namespace perimeter

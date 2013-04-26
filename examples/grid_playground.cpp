@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
         std::cin >> nr;
         std::cin >> st;
         s.two_bond_update(int(nr / int(L)), nr%int(L), (st == 0 ? qmc::bra : qmc::ket));
-        s.spin_update();
+        s.spin_update(qmc::bra);
         s.grid().print_all();
     }
         

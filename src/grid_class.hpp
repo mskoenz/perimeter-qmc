@@ -49,12 +49,13 @@ namespace perimeter {
                 H_(H)
               , L_(L)
               , grid_(boost::extents[H_][L_]) 
-              , n_loops_(loop_type()) {
+       {
             assert(H_%2==0);
             assert(L_%2==0);
             assert(H_>0);
             assert(L_>0);
             init_grid(init);
+            n_loops_[qmc::start] = 0;
             init_loops();
         }
         
@@ -66,36 +67,35 @@ namespace perimeter {
             int state = 0;
             std::for_each(begin(), end(), 
                 [&](site_type & s) {
-                    s.spin = (state + state / L_)%2 == 0 ? qmc::beta : qmc::alpha;
-                    
-                    for(state_type s1 = qmc::start; s1 < qmc::n_states/2; ++s1) {
-                        state_type s2 = qmc::invert_state - s1;
+                    for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
+                        state_type ket = qmc::invert_state - bra;
+                        alternator_[bra] = bra;
+                        s.spin[bra] = (state + state / L_)%2 == 0 ? qmc::beta : qmc::alpha;
                         if(init == 0) {
                             if(qmc::n_bonds == 3) {
-                                s.bond[s1] = qmc::hori;
-                                s.bond[s2] = qmc::hori;
+                                s.bond[bra] = qmc::hori;
+                                s.bond[ket] = qmc::hori;
                             }
                             else {
-                                s.bond[s1] = (state%2==0 ? qmc::right:qmc::left);
-                                s.bond[s2] = (state%2==0 ? qmc::right:qmc::left);
+                                s.bond[bra] = (state%2==0 ? qmc::right:qmc::left);
+                                s.bond[ket] = (state%2==0 ? qmc::right:qmc::left);
                             }
                         }
                         else if(init == 1) {
-                            s.bond[s1] = (state/L_%2==0 ? qmc::down:qmc::up);
-                            s.bond[s2] = (state/L_%2==0 ? qmc::down:qmc::up);
+                            s.bond[bra] = (state/L_%2==0 ? qmc::down:qmc::up);
+                            s.bond[ket] = (state/L_%2==0 ? qmc::down:qmc::up);
                         }
                         else if(init == 2) {
                             if(qmc::n_bonds == 3) {
-                                s.bond[s1] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
-                                s.bond[s2] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
+                                s.bond[bra] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
+                                s.bond[ket] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
                             }
                             else if(qmc::n_bonds == 6) {
-                                s.bond[s1] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
-                                s.bond[s2] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
+                                s.bond[bra] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
+                                s.bond[ket] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
                             }
                         }
-
-                        s.loop = state;
+                        s.loop[bra] = state;
                     }
                     ++state;
                 }
@@ -123,24 +123,24 @@ namespace perimeter {
         }
         
         void init_loops() {
-            if(n_loops_ != 0) {//can only be called once at the start
+            if(n_loops_[qmc::start] != 0) {//can only be called once at the start
                 throw std::runtime_error("init_loops() can only be called once");
                 return;
             }
-            
-            check_type const level = 1;
-            loop_type loop_var = 0;
-            
-            std::for_each(begin(), end(), 
-                [&](site_type & s) {
-                    if(s.check != level)
-                    {
-                        follow_loop(&s, loop_var);
-                        ++loop_var;
+            for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
+                check_type const level = 1;
+                loop_type loop_var = 0;
+                std::for_each(begin(), end(), 
+                    [&](site_type & s) {
+                        if(s.check != level)
+                        {
+                            follow_loop(&s, loop_var, bra);
+                            ++loop_var;
+                        }
                     }
-                }
-            );
-            clear_check();
+                );
+                clear_check();
+            }
         }
         
         void clear_check(){
@@ -151,46 +151,45 @@ namespace perimeter {
             );
         }
         
-        void follow_loop(site_type * start, loop_type const & loop_var) {
+        void follow_loop(site_type * start, loop_type const & loop_var, state_type const & bra) {
             site_type * next = start;
             do {
                 ++(next->check);
-                next->loop = loop_var;
-                next = next_in_loop(next);
+                next->loop[bra] = loop_var;
+                next = next_in_loop(next, bra);
             } while(next != start);
         }
         
-        void follow_loop_spin(site_type * start, bool const & flip) {
+        void follow_loop_spin(site_type * start, bool const & flip, state_type const & bra) {
             site_type * next = start;
             if(flip) {
                 do {
                     ++(next->check);
-                    next->spin = qmc::invert_spin - next->spin;
-                    next = next_in_loop(next);
+                    next->spin[bra] = qmc::invert_spin - next->spin[bra];
+                    next = next_in_loop(next, bra);
                 } while(next != start);
             } else {
                 do {
                     ++(next->check);
-                    next = next_in_loop(next);
+                    next = next_in_loop(next, bra);
                 } while(next != start);
             }
         }
         
-        void follow_loop_once(site_type * start, loop_type const & loop_var) {
+        void follow_loop_once(site_type * start, loop_type const & loop_var, state_type const & bra) {
             site_type * next = start;
             do {
-                next->loop = loop_var;
-                next = next_in_loop(next);
+                next->loop[bra] = loop_var;
+                next = next_in_loop(next, bra);
             } while(next != start);
         }
         
-        site_type * next_in_loop(site_type * in) const  {
-            static state_type alternator = qmc::bra;
-            alternator = qmc::invert_state - alternator;
-            return in->partner(alternator);
+        site_type * next_in_loop(site_type * in, state_type const & bra) {
+            alternator_[bra] = qmc::invert_state - alternator_[bra];
+            return in->partner(alternator_[bra]);
         }
         
-        void two_bond_flip(site_type * target, site_type * old_partner, bond_type b, state_type state) {
+        void two_bond_flip(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state) {
             //target node shows in the dircetion of the neighbor with the same orientation
             target->bond[state] = b;
             //old partner does the same
@@ -201,42 +200,52 @@ namespace perimeter {
             old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
         }
         
-        void two_bond_split(site_type * target, site_type * old_partner, bond_type b, state_type state) {
+        void two_bond_split(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state) {
             two_bond_flip(target, old_partner, b, state);
+            
+            state_type bra = state;
+            if(bra >= qmc::n_bra) //it's a ket
+                bra = qmc::invert_state - state; //now it's a bra
             //rename after split
             if(qmc::n_bonds == 6) {
-                loop_type tl = target->loop;
+                loop_type tl = target->loop[bra];
                 
-                follow_loop_once(old_partner, available_.back());
-                if(tl == target->loop) {
-                    available_.pop_back();
-                    ++n_loops_;
+                follow_loop_once(old_partner, available_[bra].back(), bra);
+                if(tl == target->loop[bra]) {
+                    available_[bra].pop_back();
+                    ++n_loops_[bra];
                 }
                 else {
                     //~ std::cout << "\033[1;36m" << "---strange-loop-problem---" << "\033[0m" << std::endl;
                     
-                    available_.back() = tl;
+                    available_[bra].back() = tl;
                 }
             }
             else {
-                follow_loop_once(old_partner, available_.back());
-                available_.pop_back();
-                ++n_loops_;
+                follow_loop_once(old_partner, available_[bra].back(), bra);
+                available_[bra].pop_back();
+                ++n_loops_[bra];
             }
         }
         
-        void two_bond_join(site_type * target, site_type * old_partner, bond_type b, state_type state) {
+        void two_bond_join(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state) {
+            state_type bra = state;
+            if(bra >= qmc::n_bra) //it's a ket
+                bra = qmc::invert_state - state; //now it's a bra
             //rename before join
-            available_.push_back(target->neighbor[b]->loop);
-            --n_loops_;
-            follow_loop_once(target->neighbor[b], target->loop);
+            available_[bra].push_back(target->neighbor[b]->loop[bra]);
+            --n_loops_[bra];
+            follow_loop_once(target->neighbor[b], target->loop[bra], bra);
             
             two_bond_flip(target, old_partner, b, state);
         }
         
-        bond_type two_bond_update_site(site_type const & target, state_type state) const {
+        bond_type two_bond_update_site(site_type const & target, state_type const & state) const {
+            state_type bra = state;
+            if(bra >= qmc::n_bra) //it's a ket
+                bra = qmc::invert_state - state; //now it's a bra
             for(bond_type b = qmc::start; b < qmc::n_bonds; ++b) {
-                if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin != target.neighbor[b]->spin) {
+                if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[bra] != target.neighbor[b]->spin[bra]) {
                     return b;
                 }
             }
@@ -256,41 +265,45 @@ namespace perimeter {
         ///  \brief print function
         ///  @param os is the stream that is printed into. Default is the std::cout ostream
         void print(std::ostream & os = std::cout) const {
-            for(index_type i = 0; i < H_; ++i)
-            {
-                for(index_type j = 0; j < L_; ++j)
-                {
-                    os << std::setw(3) << grid_[i][j] << " ";
+            for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
+                os << "state nr: " << bra << std::endl;
+                for(index_type i = 0; i < H_; ++i) {
+                    for(index_type j = 0; j < L_; ++j) {
+                        os << std::setw(3);
+                        grid_[i][j].print(bra, os);
+                        os << " ";
+                    }
+                    os << std::endl;
                 }
-                os << std::endl;
             }
         }
         
-        void print_all(state_type const & state = qmc::bra) const {
-            std::ostream & os = std::cout;
-            const uint kmax = site_type::print_site_height();
-            
-            array_type<std::string> s(boost::extents[kmax * H_][L_]);
-            vector_type<std::string> in;
-            for(index_type i = 0; i < H_; ++i) {
-                for(index_type j = 0; j < L_; ++j) {
-                    in = grid_[i][j].string_print(L_, state);
-                    for(index_type k = 0; k < kmax; ++k) {
-                        s[i * kmax + k][j] = in[k];
+        void print_all(std::ostream & os = std::cout) const {
+            for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
+                os << "state nr: " << bra << std::endl;
+                const uint kmax = site_type::print_site_height();
+                
+                array_type<std::string> s(boost::extents[kmax * H_][L_]);
+                vector_type<std::string> in;
+                for(index_type i = 0; i < H_; ++i) {
+                    for(index_type j = 0; j < L_; ++j) {
+                        in = grid_[i][j].string_print(L_, bra);
+                        for(index_type k = 0; k < kmax; ++k) {
+                            s[i * kmax + k][j] = in[k];
+                        }
                     }
                 }
-            }
-            for(index_type i = 0; i < H_ * kmax; ++i) {
-                if(qmc::n_bonds == 6)
-                    for(index_type j = 0; j < H_*kmax - i; ++j)
-                        os << " ";
-                    
-                for(index_type j = 0; j < L_; ++j)
-                    os << s[i][j];
-                os << std::endl;
+                for(index_type i = 0; i < H_ * kmax; ++i) {
+                    if(qmc::n_bonds == 6)
+                        for(index_type j = 0; j < H_*kmax - i; ++j)
+                            os << " ";
+                        
+                    for(index_type j = 0; j < L_; ++j)
+                        os << s[i][j];
+                    os << std::endl;
+                }
             }
         }
-        
         ///  \brief can be used to traverse the array
         site_type * begin() {
             return grid_.data();
@@ -305,8 +318,9 @@ namespace perimeter {
         uint const L_; ///<length
         array_type<site_type> grid_; ///< the actual grid
         
-        loop_type n_loops_;
-        std::vector<loop_type> available_;
+        loop_type n_loops_[qmc::n_bra];
+        std::vector<loop_type> available_[qmc::n_bra];
+        state_type alternator_[qmc::n_bra];
     };
 }//end namespace perimeter
 #endif //__GRID_CLASS_HEADER
