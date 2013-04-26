@@ -19,9 +19,11 @@ namespace perimeter {
     {
         enum state_enum {
               bra = 0
+            , bra2
+            , ket2
             , ket
             , n_states
-            , invert_state = ket
+            , invert_state = n_states - 1
         };
         
         enum bond_enum {
@@ -35,14 +37,14 @@ namespace perimeter {
             , diag_down
             , diag_up
             , none
-            , invert_bond = up //has to be the last item before n_bonds
+            , invert_bond = n_bonds - 1
         };
         enum spin_enum
         {
             beta = 0
             , alpha
             , n_spins
-            , invert_spin = alpha
+            , invert_spin = n_spins - 1
         };
         
     }
@@ -65,43 +67,45 @@ namespace perimeter {
             //~ os << spin;
             os << int(check);
         }
-        std::string print_bond(qmc::bond_enum b, std::string go, std::string no) const {
+        std::string print_bond(qmc::bond_enum b, std::string go, std::string no, state_type const & s1) const {
             std::stringstream res;
-            if(bond[qmc::bra] == b and bond[qmc::ket] == b)
+            state_type s2 = qmc::invert_state - s1;
+            
+            if(bond[s1] == b and bond[s2] == b)
                 res << WHITE << go << NONE;
             else
-                if(bond[qmc::bra] == b)
+                if(bond[s1] == b)
                     res << YELLOW << go << NONE;
                 else
-                    if(bond[qmc::ket] == b)
+                    if(bond[s2] == b)
                         res << GREEN << go << NONE;
                     else
                         res << no;
             return res.str();
         }
-        std::vector<std::string> const string_print(uint const & L) const {
+        std::vector<std::string> const string_print(uint const & L, state_type const & st) const {
             std::vector<std::string> res;
             std::stringstream os;
             
             if(qmc::n_bonds == 4) {
-                os << "  " << print_bond(qmc::up, "|", "") << std::left << std::setw(3) << loop%1000 << std::right << print_bond(qmc::up, "", " ");
+                os << "  " << print_bond(qmc::up, "|", "", st) << std::left << std::setw(3) << loop%1000 << std::right << print_bond(qmc::up, "", " ", st);
                 res.push_back(os.str()); 
                 os.str("");//reset ss
-                os << print_bond(qmc::left, "--", "  ") << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::right, "---", "   ");
+                os << print_bond(qmc::left, "--", "  ", st) << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::right, "---", "   ", st);
                 res.push_back(os.str());
                 os.str("");//reset ss
-                os << "  " << print_bond(qmc::down, "|", " ") << " " << "  ";
+                os << "  " << print_bond(qmc::down, "|", " ", st) << " " << "  ";
                 res.push_back(os.str());
                 return res;
             }
             if(qmc::n_bonds == 6) {
-                os << print_bond(qmc::diag_up, "\\", " ") << " " << print_bond(qmc::up, "/", "") << std::left << std::setw(3) << loop%1000 << std::right << print_bond(qmc::up, "", " ");
+                os << print_bond(qmc::diag_up, "\\", " ", st) << " " << print_bond(qmc::up, "/", "", st) << std::left << std::setw(3) << loop%1000 << std::right << print_bond(qmc::up, "", " ", st);
                 res.push_back(os.str()); 
                 os.str("");//reset ss
-                os << print_bond(qmc::left, "--", "  ") << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::right, "---", "   ");
+                os << print_bond(qmc::left, "--", "  ", st) << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::right, "---", "   ", st);
                 res.push_back(os.str());
                 os.str("");//reset ss
-                os << "  " << print_bond(qmc::down, "/", " ") << " " << print_bond(qmc::diag_down, "\\ ", "  ");
+                os << "  " << print_bond(qmc::down, "/", " ", st) << " " << print_bond(qmc::diag_down, "\\ ", "  ", st);
                 res.push_back(os.str());
                 return res;
             }
@@ -109,23 +113,23 @@ namespace perimeter {
                 static uint alternate = true;
                 
                 if(alternate%2) {
-                    os << "    " << print_bond(qmc::up, "\\", " ") << "    ";
+                    os << "    " << print_bond(qmc::up, "\\", " ", st) << "    ";
                     res.push_back(os.str()); 
                     os.str("");//reset ss
-                    os << " " << std::setw(3) << loop%1000 << " " << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::hori, "---", "   ");
+                    os << " " << std::setw(3) << loop%1000 << " " << (spin == 0 ? BLUEB : REDB) << spin << NONE << print_bond(qmc::hori, "---", "   ", st);
                     res.push_back(os.str());
                     os.str("");//reset ss
-                    os << "    " << print_bond(qmc::down, "/", " ") << "    ";
+                    os << "    " << print_bond(qmc::down, "/", " ", st) << "    ";
                     res.push_back(os.str());
                 }
                 else {
-                    os << "   " << print_bond(qmc::up, "/", " ") << "     ";
+                    os << "   " << print_bond(qmc::up, "/", " ", st) << "     ";
                     res.push_back(os.str()); 
                     os.str("");//reset ss
-                    os << print_bond(qmc::hori, "--", "  ") << (spin == 0 ? BLUEB : REDB) << spin << NONE << " " << std::left << std::setw(3) << loop%1000 << std::right << "  ";
+                    os << print_bond(qmc::hori, "--", "  ", st) << (spin == 0 ? BLUEB : REDB) << spin << NONE << " " << std::left << std::setw(3) << loop%1000 << std::right << "  ";
                     res.push_back(os.str());
                     os.str("");//reset ss
-                    os << "   " << print_bond(qmc::down, "\\", " ") << "     ";
+                    os << "   " << print_bond(qmc::down, "\\", " ", st) << "     ";
                     res.push_back(os.str());
                 }
                 ++alternate;

@@ -41,8 +41,8 @@ namespace perimeter
             
             bond_type const b = grid_.two_bond_update_site(target, state);
             if(b != qmc::none) {
+                
                 bond_type & dir = target.bond[state];
-                //~ grid_.two_bond_flip(&target, target.neighbor[dir], b, state);
                 if(target.loop == target.neighbor[b]->loop) {
                     grid_.two_bond_split(&target, target.neighbor[dir], b, state);
                 }

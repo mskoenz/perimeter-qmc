@@ -21,6 +21,7 @@ addon::parameter.get();
 #include <iostream>
 #include <cstdlib>
 #include <map>
+#include <vector>
 #include <sstream>
 
 //timer2_msk.hpp documents addon

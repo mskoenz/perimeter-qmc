@@ -51,8 +51,9 @@ int main(int argc, char* argv[])
     for(uint k = 0; k < L_vec.size(); ++k) {
         double H = H_vec[k];
         double L = L_vec[k];
-        double maxi = 100000000;
-        double spin_mod = 0;
+        //~ double maxi = 100000000;
+        double maxi = 1;
+        double spin_mod = maxi;
         double accept = 0;
         param["-init"] = 0; //0 == horizontal bonds / 1 == vertical bonds
         param["-p"] = p_vec[j];
@@ -61,22 +62,22 @@ int main(int argc, char* argv[])
         
         sim_class s(param);
         
-        addon::random_class<int, mersenne> rngH(0, H);
-        addon::random_class<int, mersenne> rngL(0, L);
+        addon::random_class<int, fibonacci> rngH(0, H);
+        addon::random_class<int, fibonacci> rngL(0, L);
         
         timer_class<data> timer(maxi, "data_set_2.txt");
         timer.set_names("mc_updates[1/us]", "loop-time[us]", "spin-update-mod[-]", "H", "L", "size", "seedH", "reject[%]", "accept", "p");
         
-        //~ int spin_mod_i = spin_mod;
+        int spin_mod_i = spin_mod;
         
         uint state = qmc::bra;
         for(uint i = 1; i <= maxi; ++i)
         {
             accept += s.two_bond_update(rngH(), rngL(), state);
             state = qmc::invert_state - state;
-            //~ if(i%spin_mod_i == 0)
-                //~ s.spin_update();
-            //~ timer.progress(i);
+            if(i%spin_mod_i == 0)
+                s.spin_update();
+            timer.progress(i);
         }
         //~ s.grid().print_all();
         

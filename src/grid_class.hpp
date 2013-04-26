@@ -67,33 +67,36 @@ namespace perimeter {
             std::for_each(begin(), end(), 
                 [&](site_type & s) {
                     s.spin = (state + state / L_)%2 == 0 ? qmc::beta : qmc::alpha;
-                    if(init == 0) {
-                        
-                        if(qmc::n_bonds == 3) {
-                            s.bond[qmc::bra] = qmc::hori;
-                            s.bond[qmc::ket] = qmc::hori;
+                    
+                    for(state_type s1 = qmc::start; s1 < qmc::n_states/2; ++s1) {
+                        state_type s2 = qmc::invert_state - s1;
+                        if(init == 0) {
+                            if(qmc::n_bonds == 3) {
+                                s.bond[s1] = qmc::hori;
+                                s.bond[s2] = qmc::hori;
+                            }
+                            else {
+                                s.bond[s1] = (state%2==0 ? qmc::right:qmc::left);
+                                s.bond[s2] = (state%2==0 ? qmc::right:qmc::left);
+                            }
                         }
-                        else {
-                            s.bond[qmc::bra] = (state%2==0 ? qmc::right:qmc::left);
-                            s.bond[qmc::ket] = (state%2==0 ? qmc::right:qmc::left);
+                        else if(init == 1) {
+                            s.bond[s1] = (state/L_%2==0 ? qmc::down:qmc::up);
+                            s.bond[s2] = (state/L_%2==0 ? qmc::down:qmc::up);
                         }
-                    }
-                    else if(init == 1) {
-                        s.bond[qmc::bra] = (state/L_%2==0 ? qmc::down:qmc::up);
-                        s.bond[qmc::ket] = (state/L_%2==0 ? qmc::down:qmc::up);
-                    }
-                    else if(init == 2) {
-                        if(qmc::n_bonds == 3) {
-                            s.bond[qmc::bra] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
-                            s.bond[qmc::ket] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
+                        else if(init == 2) {
+                            if(qmc::n_bonds == 3) {
+                                s.bond[s1] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
+                                s.bond[s2] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
+                            }
+                            else if(qmc::n_bonds == 6) {
+                                s.bond[s1] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
+                                s.bond[s2] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
+                            }
                         }
-                        else if(qmc::n_bonds == 6) {
-                            s.bond[qmc::bra] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
-                            s.bond[qmc::ket] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
-                        }
-                    }
 
-                    s.loop = state;
+                        s.loop = state;
+                    }
                     ++state;
                 }
             );
@@ -263,24 +266,21 @@ namespace perimeter {
             }
         }
         
-        void print_all(std::ostream & os = std::cout) const {
+        void print_all(state_type const & state = qmc::bra) const {
+            std::ostream & os = std::cout;
             const uint kmax = site_type::print_site_height();
             
             array_type<std::string> s(boost::extents[kmax * H_][L_]);
             vector_type<std::string> in;
-            for(index_type i = 0; i < H_; ++i)
-            {
-                for(index_type j = 0; j < L_; ++j)
-                {
-                    in = grid_[i][j].string_print(L_);
-                    for(index_type k = 0; k < kmax; ++k)
-                    {
+            for(index_type i = 0; i < H_; ++i) {
+                for(index_type j = 0; j < L_; ++j) {
+                    in = grid_[i][j].string_print(L_, state);
+                    for(index_type k = 0; k < kmax; ++k) {
                         s[i * kmax + k][j] = in[k];
                     }
                 }
             }
-            for(index_type i = 0; i < H_ * kmax; ++i)
-            {
+            for(index_type i = 0; i < H_ * kmax; ++i) {
                 if(qmc::n_bonds == 6)
                     for(index_type j = 0; j < H_*kmax - i; ++j)
                         os << " ";
@@ -303,7 +303,7 @@ namespace perimeter {
     private:
         uint const H_; ///<height
         uint const L_; ///<length
-        array_type<site_type> grid_;            ///< the actual grid
+        array_type<site_type> grid_; ///< the actual grid
         
         loop_type n_loops_;
         std::vector<loop_type> available_;
