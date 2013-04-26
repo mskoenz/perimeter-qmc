@@ -51,8 +51,8 @@ int main(int argc, char* argv[])
     for(uint k = 0; k < L_vec.size(); ++k) {
         double H = H_vec[k];
         double L = L_vec[k];
-        double maxi = 100000000;
-        //~ double maxi = 1;
+        //~ double maxi = 100000000;
+        double maxi = 1;
         double spin_mod = maxi;
         double accept = 0;
         param["-init"] = 0; //0 == horizontal bonds / 1 == vertical bonds

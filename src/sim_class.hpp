@@ -39,16 +39,20 @@ namespace perimeter
         bool two_bond_update(index_type i, index_type j, state_type state) {
             site_type & target = grid_(i, j);
             
-            bond_type const b = grid_.two_bond_update_site(target, state);
+            state_type bra = state;
+            if(bra >= qmc::n_bra) //it's a ket
+                bra = qmc::invert_state - state; //now it's a bra
+            
+            bond_type const b = grid_.two_bond_update_site(target, state, bra);
             if(b != qmc::none) {
                 
                 bond_type & dir = target.bond[state];
-                if(target.loop == target.neighbor[b]->loop) {
-                    grid_.two_bond_split(&target, target.neighbor[dir], b, state);
+                if(target.loop[bra] == target.neighbor[b]->loop[bra]) {
+                    grid_.two_bond_split(&target, target.neighbor[dir], b, state, bra);
                 }
                 else {
                     if(rngS_() > p)
-                        grid_.two_bond_join(&target, target.neighbor[dir], b, state);
+                        grid_.two_bond_join(&target, target.neighbor[dir], b, state, bra);
                 }
                 return true;
             }

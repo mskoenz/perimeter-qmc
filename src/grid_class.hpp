@@ -200,12 +200,9 @@ namespace perimeter {
             old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
         }
         
-        void two_bond_split(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state) {
+        void two_bond_split(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state, state_type const & bra) {
             two_bond_flip(target, old_partner, b, state);
             
-            state_type bra = state;
-            if(bra >= qmc::n_bra) //it's a ket
-                bra = qmc::invert_state - state; //now it's a bra
             //rename after split
             if(qmc::n_bonds == 6) {
                 loop_type tl = target->loop[bra];
@@ -228,10 +225,7 @@ namespace perimeter {
             }
         }
         
-        void two_bond_join(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state) {
-            state_type bra = state;
-            if(bra >= qmc::n_bra) //it's a ket
-                bra = qmc::invert_state - state; //now it's a bra
+        void two_bond_join(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state, state_type const & bra) {
             //rename before join
             available_[bra].push_back(target->neighbor[b]->loop[bra]);
             --n_loops_[bra];
@@ -240,10 +234,7 @@ namespace perimeter {
             two_bond_flip(target, old_partner, b, state);
         }
         
-        bond_type two_bond_update_site(site_type const & target, state_type const & state) const {
-            state_type bra = state;
-            if(bra >= qmc::n_bra) //it's a ket
-                bra = qmc::invert_state - state; //now it's a bra
+        bond_type two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
             for(bond_type b = qmc::start; b < qmc::n_bonds; ++b) {
                 if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[bra] != target.neighbor[b]->spin[bra]) {
                     return b;

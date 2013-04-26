@@ -13,6 +13,9 @@
 #include <boost/integer.hpp>
 #include <addons/color.hpp>
 
+#define DEBUG_VAR(x) std::cout << "\033[1;31m" << "  DEBUG_VAR: " << "\033[0;31m" << #x << " = " << x << "\033[0m" << std::endl;
+#define DEBUG_MSG(x) std::cout << "\033[1;31m" << "  DEBUG_MSG: " << "\033[0;31m" << x << "\033[0m" << std::endl;
+
 //perimeter is documented in grid_class.hpp
 namespace perimeter {
     namespace qmc
