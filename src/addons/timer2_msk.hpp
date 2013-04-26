@@ -106,7 +106,7 @@ namespace addon {
         ///  @param workload takes a uint64_t that specifies, how much work that has to be done
         ///  @param name defines the output-filename. the default is "benchmark.txt"
         ///  the timer starts as soon as the class is constructed
-        timer_class<T>(uint64_t workload = 0, std::string const & name = default_name): 
+        timer_class<T>(uint64_t workload = 1, std::string const & name = default_name): 
                                                               name_(name)
                                                             , work_(workload)
                                                             , written_(0)
@@ -137,7 +137,10 @@ namespace addon {
         }
         ///  \brief returns the last mesured loop-time in [us]
         double loop_time() {
-            return loop_time_;
+            if(loop_time_ != 0)
+                return loop_time_;
+            else
+                return (elapsed() * 1000000) / work_;
         }
         
         ///  \brief name the data

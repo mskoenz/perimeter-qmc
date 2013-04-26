@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
             state = qmc::invert_state - state;
             //~ if(i%spin_mod_i == 0)
                 //~ s.spin_update();
-            timer.progress(i);
+            //~ timer.progress(i);
         }
         //~ s.grid().print_all();
         
