@@ -31,9 +31,9 @@ namespace perimeter {
             , left
             , up
             , n_bonds
+            , hori
             , diag_down
             , diag_up
-            , hori
             , none
             , invert_bond = up //has to be the last item before n_bonds
         };

@@ -313,12 +313,79 @@ def analyze_argv(arg):
                     print(i,":",labels[i])
                 return -1
         
+        begin = 0
+        end = len(data[xind])
+        
+        if "-begin" in llist:
+            arg = llist.index("-begin")
+            try:
+                begin = int(llist[arg + 1])
+            except:
+                print("you need to specify a begin with this option")
+                return -1
+        if "-end" in llist:
+            arg = llist.index("-end")
+            try:
+                end = int(llist[arg + 1])
+            except:
+                print("you need to specify a end with this option")
+                return -1
+        
         pylab.xlabel(labels[xind])
         pylab.title(fname)
         pylab.ylabel(labels[yind])
         pylab.grid(True)
-        pylab.plot(data[xind], data[yind], "r-")
-        #marker = ".", linestyle = "-", color = "r"
+        if "-param" in llist:
+            arg = llist.index("-param")
+            try:
+                p = llist[arg + 1]
+                if y in labels:
+                    pind = labels.index(p)
+                else:
+                    try:
+                        pind = int(p)
+                        if pind >= len(labels) or pind < 0:
+                            print(pind, "is too big or small")
+                            return -1
+                        if pind == xind or pind == yind:
+                            print(pind, "must be different from x & y")
+                            return -1
+                    except:
+                        print(pind, "is no label of file 1")
+                        return -1
+            except:
+                print("you need to specify a label")
+                print("possible labels are:")
+                for i in range(n_labels):
+                    if i!=xind and i!= yind:
+                        print(i,":",labels[i])
+                return -1
+            
+            skelet = [[] for columns in data]
+            datasplit = []
+            print(datasplit)
+            idx = -1
+            param = -1111111
+            plotlabels = []
+            color = ["r-", "g-", "b-", "c-", "m-", "k-"]
+            for i in range(len(data[xind])):
+                if param != data[pind][i]:
+                    idx += 1
+                    datasplit.append(copy.deepcopy(skelet))
+                    param = data[pind][i]
+                    plotlabels.append(labels[pind]+" = "+str(param))
+                    print("incr", param)
+                for columns in range(len(data)):
+                    datasplit[idx][columns].append(data[columns][i])
+                    
+            for parts in range(len(datasplit)):
+                print("-------------------------------------")
+                print(len(datasplit[parts][xind]))
+                print(len(data[xind]))
+                pylab.plot(datasplit[parts][xind][begin:end], datasplit[parts][yind][begin:end], color[parts], label = plotlabels[parts])
+                pylab.legend()
+        else:
+            pylab.plot(data[xind][begin:end], data[yind][begin:end], "r-")
         pylab.show()
     return 0
 

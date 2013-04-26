@@ -29,7 +29,8 @@ namespace perimeter
                                                         , L_(param["-L"])
                                                         , param_(param)
                                                         , grid_(H_, L_, param["-init"]) 
-                                                        , rngS_() {
+                                                        , rngS_() 
+                                                        , p(param_["-p"]){
             std::cout << "Parameter" << std::endl;
             for(auto in = param_.begin(); in != param_.end(); ++in)
                 std::cout << in->first << " = " << in->second << std::endl;
@@ -45,7 +46,7 @@ namespace perimeter
                     grid_.two_bond_split(&target, target.neighbor[dir], b, state);
                 }
                 else {
-                    if(rngS_() > .5)
+                    if(rngS_() > p)
                         grid_.two_bond_join(&target, target.neighbor[dir], b, state);
                 }
                 return true;
@@ -90,6 +91,7 @@ namespace perimeter
         std::map<std::string, double> param_;
         grid_class grid_;
         addon::random_class<double, addon::mersenne> rngS_;
+        double const p;
     };
 }
 #endif //__SIM_CLASS_HEADER
