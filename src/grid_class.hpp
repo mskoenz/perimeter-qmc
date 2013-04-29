@@ -272,7 +272,7 @@ namespace perimeter {
         site_type * end() {
             return grid_.data() + grid_.num_elements();
         }
-    private:
+    //~ private:
         ///  \brief used by the constructor
         ///  
         ///@param init says how the grid should be initialized
@@ -341,14 +341,15 @@ namespace perimeter {
         ///  is also only used once by the constructor at the start. initializes the loop labels
         void init_loops() {
             for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
+                available_[bra].clear();
                 check_type const level = 1;
-                loop_type loop_var = 0;
+                n_loops_[bra] = 0;
                 std::for_each(begin(), end(), 
                     [&](site_type & s) {
                         if(s.check != level)
                         {
-                            follow_loop(&s, loop_var, bra);
-                            ++loop_var;
+                            follow_loop(&s, n_loops_[bra], bra);
+                            ++n_loops_[bra];
                         }
                     }
                 );
@@ -415,7 +416,7 @@ namespace perimeter {
         }
         
     
-    private:
+    //~ private:
         uint const H_; ///<height
         uint const L_; ///<length
         array_type<site_type> grid_; ///< the actual grid
