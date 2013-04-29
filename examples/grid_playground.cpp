@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
     addon::parameter.set(H, "H", 6); //set with default
     addon::parameter.set(L, "L", 10);
     addon::parameter.set("init", 1); //0 == horizontal bonds / 1 == vertical bonds
+    addon::parameter.set("p", 0); //joins are always accepted
     addon::parameter.read(argc, argv);
     
     sim_class s(addon::parameter.get());
@@ -53,8 +54,10 @@ int main(int argc, char* argv[])
         std::cout << "nr s: " << std::endl;
         std::cin >> nr;
         std::cin >> st;
-        s.two_bond_update(int(nr / int(L)), nr%int(L), (st == 0 ? qmc::bra : qmc::ket));
-        s.spin_update(qmc::bra);
+        if(nr == -2)
+            s.spin_update(qmc::bra);
+        else
+            s.two_bond_update(int(nr / int(L)), nr%int(L), (st == 0 ? qmc::bra : qmc::ket));
         s.grid().print_all();
     }
         

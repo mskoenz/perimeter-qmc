@@ -9,6 +9,7 @@ import sys
 import os
 import copy
 import pylab
+import numpy
 
 def analyze_argv(arg):
     if len(arg) < 2:
@@ -332,8 +333,11 @@ def analyze_argv(arg):
                 return -1
         
         pylab.xlabel(labels[xind])
+        if "-ylog" in llist:
+            pylab.ylabel("log("+str(labels[yind])+")")
+        else:
+            pylab.ylabel(labels[yind])
         pylab.title(fname)
-        pylab.ylabel(labels[yind])
         pylab.grid(True)
         if "-param" in llist:
             arg = llist.index("-param")
@@ -363,11 +367,10 @@ def analyze_argv(arg):
             
             skelet = [[] for columns in data]
             datasplit = []
-            print(datasplit)
             idx = -1
             param = -1111111
             plotlabels = []
-            color = ["r-", "g-", "b-", "c-", "m-", "k-"]
+            color = ["r-", "g-", "b-", "c-", "m-", "k-","r--", "g--", "b--", "c--", "m--", "k--"]
             for i in range(len(data[xind])):
                 if param != data[pind][i]:
                     idx += 1
@@ -376,14 +379,20 @@ def analyze_argv(arg):
                     plotlabels.append(labels[pind]+" = "+str(param))
                     print("incr", param)
                 for columns in range(len(data)):
-                    datasplit[idx][columns].append(data[columns][i])
+                    datasplit[idx][columns].append(copy.deepcopy(float(data[columns][i])))
                     
             for parts in range(len(datasplit)):
                 print("-------------------------------------")
                 print(len(datasplit[parts][xind]))
                 print(len(data[xind]))
-                pylab.plot(datasplit[parts][xind][begin:end], datasplit[parts][yind][begin:end], color[parts], label = plotlabels[parts])
-                pylab.legend()
+                datasplit[parts][xind][begin:end]
+                if "-ylog" in llist:
+                    arr = numpy.array(datasplit[parts][yind][begin:end])
+                    arr = numpy.log(arr)
+                    pylab.plot(datasplit[parts][xind][begin:end], arr, color[parts], label = plotlabels[parts])
+                else:
+                    pylab.plot(datasplit[parts][xind][begin:end], datasplit[parts][yind][begin:end], color[parts], label = plotlabels[parts])
+            pylab.legend(loc = 1)
         else:
             pylab.plot(data[xind][begin:end], data[yind][begin:end], "r-")
         pylab.show()

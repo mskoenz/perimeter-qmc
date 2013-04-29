@@ -18,8 +18,16 @@
 
 //perimeter is documented in grid_class.hpp
 namespace perimeter {
-    namespace qmc
-    {
+    ///  \brief namespace for all compiletime information
+    ///  
+    ///  contains all enums that determine the grid type, the amount of states and also the spin-states
+    namespace qmc {
+        ///  \brief contains the information about the states
+        ///  
+        ///  n_states has to be even, since a transition graph always needs a bra and a ket.
+        ///  the bra and the corresponding ket have to be arranged in such a manner, that
+        ///  invert_states - ket == bra and vice versa.
+        ///  n_bra specifies how many transition graphes there are
         enum state_enum {
               bra = 0
             , bra2
@@ -35,7 +43,13 @@ namespace perimeter {
             , n_bra = n_states/2
             , invert_state = n_states - 1
         };
-        
+        ///  \brief contains the information about the bonds
+        ///  
+        ///  the bonds infront of n_states define what neighbor relations are possible. e.g. down, left, right, up
+        ///  would define a square grid. if diag_up and diag_down is added, one gets a triangular grid.
+        ///  with just up, down and hori (for horizontal) one gets the hexagonal grid.
+        ///  the bonds have to be arranged in such a manner, that
+        ///  invert_bond - bond == opposite_bond. e.g. up and down are opposite
         enum bond_enum {
               start = 0
             , down = 0
@@ -43,14 +57,17 @@ namespace perimeter {
             , left
             , up
             , n_bonds
-            , hori
             , diag_down
+            , hori
             , diag_up
             , none
             , invert_bond = n_bonds - 1
         };
-        enum spin_enum
-        {
+        ///  \brief contains the information about the spins
+        ///  
+        ///  the spins have to be arranged in such a manner, that
+        ///  invert_spin - spin == opposite_spin
+        enum spin_enum {
             beta = 0
             , alpha
             , n_spins
@@ -58,14 +75,15 @@ namespace perimeter {
         };
         
     }
-    
+    ///  \brief the type of the sites in the grid
     struct site_struct {
-        typedef int spin_type;
-        typedef uint loop_type;
-        typedef uint bond_type;
-        typedef uint8_t check_type;
-        typedef uint state_type;
+        typedef int spin_type; ///< the spin type, for now just an int
+        typedef uint loop_type; ///< used for the loop label
+        typedef uint bond_type; ///< based on bond_enum, but since the enum is not usable as an index, its an uint
+        typedef uint8_t check_type; ///< used for the check variable. a bool would also work, but an uint8_t needs the same space and provides more option
+        typedef uint state_type; ///< names the type of the state. again, casting from and to enum all the time would be cumbersome
         
+        ///  \brief default constructor
         site_struct(): check(0) {
             for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
                 loop[bra] = 0;
@@ -74,6 +92,9 @@ namespace perimeter {
                 bond[qmc::invert_state - bra] = qmc::none;
             }
         }
+        ///  \brief spin constructor
+        ///  
+        ///  does exactly the as the default, just lets you set the spin
         site_struct(spin_type const & spin_in): check(0) {
             for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
                 loop[bra] = 0;
@@ -82,28 +103,17 @@ namespace perimeter {
                 bond[qmc::invert_state - bra] = qmc::none;
             }
         }
+        ///  \brief returns the neightbor of state of (*this)
+        ///  
+        ///  @param state names the state in which one wants to know the entanglement-parter
         site_struct * partner(bond_type const state) {
             return neighbor[bond[state]];
         }
+        ///  \brief prints the spin of state s12 (12 bc it can be bra or ket) to os
         void print(state_type const & s12 = qmc::start, std::ostream & os = std::cout) const {
             os << spin[s12];
         }
-        std::string print_bond(qmc::bond_enum b, std::string go, std::string no, state_type const & s1) const {
-            std::stringstream res;
-            state_type s2 = qmc::invert_state - s1;
-            
-            if(bond[s1] == b and bond[s2] == b)
-                res << WHITE << go << NONE;
-            else
-                if(bond[s1] == b)
-                    res << YELLOW << go << NONE;
-                else
-                    if(bond[s2] == b)
-                        res << GREEN << go << NONE;
-                    else
-                        res << no;
-            return res.str();
-        }
+        ///  \brief the fancy print-function used by the grid_class
         std::vector<std::string> const string_print(uint const & L, state_type const & s1) const {
             std::vector<std::string> res;
             std::stringstream os;
@@ -161,15 +171,35 @@ namespace perimeter {
             
             
         }
+        ///  \brief returns how many lines a fancy plot needs
         constexpr static const uint print_site_height() {
             return 3;
         }
         
-        spin_type spin[qmc::n_bra];
-        loop_type loop[qmc::n_bra];
-        bond_type bond[qmc::n_states];
-        site_struct * neighbor[qmc::n_bonds];
-        check_type check;
+        spin_type spin[qmc::n_bra]; ///< looplabel for each transitiongraph, since bra and ket have to have the same spin
+        loop_type loop[qmc::n_bra]; ///< looplabel for each transitiongraph
+        bond_type bond[qmc::n_states]; ///< bond-direction for each state
+        site_struct * neighbor[qmc::n_bonds]; ///< pointes structure to determine neighbor relations. same for all states
+        check_type check; ///< shared by all states
+    
+    private:
+        ///  \brief plots the bonds in differente colors, depending how the config is
+        std::string print_bond(qmc::bond_enum b, std::string go, std::string no, state_type const & s1) const {
+            std::stringstream res;
+            state_type s2 = qmc::invert_state - s1;
+            
+            if(bond[s1] == b and bond[s2] == b)
+                res << WHITE << go << NONE;
+            else
+                if(bond[s1] == b)
+                    res << YELLOW << go << NONE;
+                else
+                    if(bond[s2] == b)
+                        res << GREEN << go << NONE;
+                    else
+                        res << no;
+            return res.str();
+        }
     };
     
     std::ostream & operator<<(std::ostream & os, site_struct const & site) {
