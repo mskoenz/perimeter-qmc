@@ -29,7 +29,8 @@ namespace perimeter {
         ///  invert_states - ket == bra and vice versa.
         ///  n_bra specifies how many transition graphes there are
         enum state_enum {
-              bra = 0
+              start_state = 0
+            , bra = 0
             , bra2
             //~ , bra3
             //~ , bra4
@@ -51,8 +52,9 @@ namespace perimeter {
         ///  the bonds have to be arranged in such a manner, that
         ///  invert_bond - bond == opposite_bond. e.g. up and down are opposite
         enum bond_enum {
-              start = 0
-            , down = 0
+              start_bond = 1
+            , me = 0
+            , down
             , right
             , left
             , up
@@ -61,14 +63,18 @@ namespace perimeter {
             , hori
             , diag_up
             , none
-            , invert_bond = n_bonds - 1
+            , invert_bond = n_bonds - 1 + start_bond
+            , tri = 6 + start_bond
+            , sqr = 4 + start_bond
+            , hex = 3 + start_bond
         };
         ///  \brief contains the information about the spins
         ///  
         ///  the spins have to be arranged in such a manner, that
         ///  invert_spin - spin == opposite_spin
         enum spin_enum {
-            beta = 0
+              start_spin = 0
+            , beta = 0
             , alpha
             , n_spins
             , invert_spin = n_spins - 1
@@ -85,7 +91,7 @@ namespace perimeter {
         
         ///  \brief default constructor
         site_struct(): check(0) {
-            for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
+            for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
                 loop[bra] = 0;
                 spin[bra] = qmc::beta;
                 bond[bra] = qmc::none;
@@ -96,7 +102,7 @@ namespace perimeter {
         ///  
         ///  does exactly the as the default, just lets you set the spin
         site_struct(spin_type const & spin_in): check(0) {
-            for(state_type bra = qmc::start; bra != qmc::n_bra; ++bra) {
+            for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
                 loop[bra] = 0;
                 spin[bra] = spin_in;
                 bond[bra] = qmc::none;
@@ -110,7 +116,7 @@ namespace perimeter {
             return neighbor[bond[state]];
         }
         ///  \brief prints the spin of state s12 (12 bc it can be bra or ket) to os
-        void print(state_type const & s12 = qmc::start, std::ostream & os = std::cout) const {
+        void print(state_type const & s12 = qmc::start_state, std::ostream & os = std::cout) const {
             os << spin[s12];
         }
         ///  \brief the fancy print-function used by the grid_class
@@ -118,7 +124,7 @@ namespace perimeter {
             std::vector<std::string> res;
             std::stringstream os;
             
-            if(qmc::n_bonds == 4) {
+            if(qmc::n_bonds == qmc::sqr) {
                 os << "  " << print_bond(qmc::up, "|", "", s1) << std::left << std::setw(3) << loop[s1]%1000 << std::right << print_bond(qmc::up, "", " ", s1);
                 res.push_back(os.str()); 
                 os.str("");//reset ss
@@ -129,7 +135,7 @@ namespace perimeter {
                 res.push_back(os.str());
                 return res;
             }
-            if(qmc::n_bonds == 6) {
+            if(qmc::n_bonds == qmc::tri) {
                 os << print_bond(qmc::diag_up, "\\", " ", s1) << " " << print_bond(qmc::up, "/", "", s1) << std::left << std::setw(3) << loop[s1]%1000 << std::right << print_bond(qmc::up, "", " ", s1);
                 res.push_back(os.str()); 
                 os.str("");//reset ss
@@ -140,7 +146,7 @@ namespace perimeter {
                 res.push_back(os.str());
                 return res;
             }
-            if(qmc::n_bonds == 3) {
+            if(qmc::n_bonds == qmc::hex) {
                 static uint alternate = true;
                 
                 if(alternate%2) {
@@ -203,7 +209,7 @@ namespace perimeter {
     };
     
     std::ostream & operator<<(std::ostream & os, site_struct const & site) {
-        site.print(qmc::start, os);
+        site.print(qmc::start_state, os);
         return os;
     }
 }//end namespace perimeter

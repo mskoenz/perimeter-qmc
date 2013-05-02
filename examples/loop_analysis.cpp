@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
         
         int spin_mod_i = spin_mod;
         
-        std::map<int, double> acc;
+        std::map<uint, uint> acc;
         
         uint state = qmc::bra;
         for(uint i = 1; i <= maxi; ++i) {
@@ -54,10 +54,10 @@ int main(int argc, char* argv[])
             if(i%spin_mod_i == 0)
                 s.spin_update(qmc::bra);
             if(i%int(3*H*L) == 0) {
-                std::map<int, double> l(s.grid().loop_analysis(qmc::bra));
+                std::map<uint, uint> l(s.grid().loop_analysis(qmc::bra));
                 std::for_each(l.begin(), l.end(),
-                    [&](std::pair<const int, double> & p) {
-                        acc[p.first] += p.second;
+                    [&](std::pair<const uint, uint> & p) {
+                        acc[p.first] += p.second / (H * L / 2);
                     }
                 );
             }
@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
         //~ s.grid().print_all();
         
         std::for_each(acc.begin(), acc.end(),
-            [&](std::pair<const int, double> & p) {
+            [&](std::pair<const uint, uint> & p) {
                 std::cout << p.first << " "  << p.second/(maxi / (3*H*L)) << std::endl;
                 timer.write(1/timer.loop_time(), H, L, H*L, spin_mod, p.first, p.second/(maxi / (3*H*L)), accept / maxi, p_vec[j]);
             }

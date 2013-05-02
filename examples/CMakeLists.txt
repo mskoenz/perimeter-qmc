@@ -5,6 +5,7 @@ FOREACH (name   measure_periodic_access
                 rng_example
                 loop_analysis
                 loop_to_braket_realisation
+                test_loop_realisator
     )
     add_executable(${name} ${name}.cpp)
     add_dependencies(${name} build_nr) #increases the build-number

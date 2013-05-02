@@ -25,6 +25,5 @@ int main(int argc, char* argv[])
         if(g(0, 0).neighbor[qmc::right]->spin[0] != 1)
             return 1;
     }
-        
     return 0;
 }
