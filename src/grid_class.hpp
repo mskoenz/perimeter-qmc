@@ -257,14 +257,27 @@ namespace perimeter {
             );
             return res;
         }
-        loop_type n_loops() const {
+        loop_type n_loops(state_type const &  bra) const {
+            loop_type res(0);
+            auto l = loop_analysis(bra);
+            std::for_each(l.begin(), l.end(),
+                [&](std::pair<const uint, uint> & p) {
+                    res += p.second;
+                }
+            );
+            return res;
+        }
+        loop_type n_loops(state_type const &  bra, loop_type const & size) const {
+            return loop_analysis(bra)[size];
+        }
+        loop_type n_all_loops() const {
             loop_type res(0);
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
                 res += n_loops_[bra];
             }
             return res;
         }
-        loop_type n_loops(loop_type size) const {
+        loop_type n_all_loops(loop_type size) const {
             loop_type res(0);
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
                 res += loop_analysis(bra)[size];
@@ -300,6 +313,25 @@ namespace perimeter {
         }
         loop_type n_cross_loops(state_type const & bra1, state_type const & bra2, loop_type size) const {
             return cross_loop_analysis(bra1, bra2)[size];
+        }
+        
+        void change_loop(state_type const &  bra, loop_type const & loop) {
+            site_struct * start = NULL;
+            for(index_type i = 0; i < H_; ++i)  {
+                for(index_type j = 0; j < L_; ++j)  {
+                    if(grid_[i][j].loop[bra] == loop) {
+                        start = &grid_[i][j];
+                        break;
+                    }
+                }
+            }
+            site_struct * next = next_in_loop(start, bra);
+            site_struct * delay = start;
+            do {
+                std::swap(delay->bond[bra], delay->bond[qmc::invert_state - bra]);
+                delay = next;
+                next = next_in_loop(next, bra);
+            } while(delay != start);
         }
         //=================== print and iterate ===================
         ///  \brief print function

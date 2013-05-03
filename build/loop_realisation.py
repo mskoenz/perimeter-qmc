@@ -57,11 +57,12 @@ if __name__ == "__main__":
     #~ subfolder = "2x2/"
     #~ subfolder = "2x4/"
     #~ subfolder = "2x4/different1/"
-    #~ subfolder = "4x4/"
-    #~ subfolder = "6x6/"
-    #~ subfolder = "6x6/different6/"
     subfolder = "2x4/different4/"
     #~ subfolder = "2x4/different3/"
+    #~ subfolder = "4x4/"
+    #~ subfolder = "4x4/strange/"
+    #~ subfolder = "6x6/"
+    #~ subfolder = "6x6/different6/"
     outf = subfolder[0:3] + ".txt"
     
     fls = glob.glob("./v2/" + subfolder + "*.txt")

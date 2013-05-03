@@ -31,7 +31,7 @@ namespace perimeter {
     class loop_real_class {
         
         typedef std::vector<std::string> stage1_type;
-        static const uint stage2_size = 32;
+        static const uint stage2_size = 128;
         typedef std::bitset<stage2_size> stage2_type;
         static const uint stage3_size = 6;
         typedef std::bitset<stage3_size> bitset_bond;
@@ -81,7 +81,7 @@ namespace perimeter {
         loop_real_class(loop_real_class const & arg): H_(arg.H_), L_(arg.L_), stage1_(arg.stage1_), stage2_(arg.stage2_), stage3_(arg.stage3_), stage4_(arg.stage4_) {
             assert(arg == (*this));
         }
-        operator uint() {
+        operator uint64_t() {
             return stage2_.to_ulong();
         }
         //------------------- converter -------------------
@@ -403,17 +403,17 @@ namespace perimeter {
     loop_real_class operator&(loop_real_class const & l1, loop_real_class const & l2) {
         assert(l1.H_ == l2.H_);
         assert(l1.L_ == l2.L_);
-        return loop_real_class(l1.H_, l1.L_, (l1.stage2_.to_ulong() & l2.stage2_.to_ulong()));
+        return loop_real_class(l1.H_, l1.L_, (l1.stage2_ & l2.stage2_));
     }
     loop_real_class operator|(loop_real_class const & l1, loop_real_class const & l2) {
         assert(l1.H_ == l2.H_);
         assert(l1.L_ == l2.L_);
-        return loop_real_class(l1.H_, l1.L_, (l1.stage2_.to_ulong() | l2.stage2_.to_ulong()));
+        return loop_real_class(l1.H_, l1.L_, (l1.stage2_ | l2.stage2_));
     }
     loop_real_class operator^(loop_real_class const & l1, loop_real_class const & l2) {
         assert(l1.H_ == l2.H_);
         assert(l1.L_ == l2.L_);
-        return loop_real_class(l1.H_, l1.L_, (l1.stage2_.to_ulong() ^ l2.stage2_.to_ulong()));
+        return loop_real_class(l1.H_, l1.L_, (l1.stage2_ ^ l2.stage2_));
     }
 
 }//end namespace perimeter
