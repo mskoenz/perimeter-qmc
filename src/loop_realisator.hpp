@@ -66,6 +66,7 @@ namespace perimeter {
             convert_1_to_2();
             convert_1_to_3();
             create_loop_layer();
+            winding();
         }
         loop_real_class(uint H, uint L, stage2_type const & in): H_(H), L_(L), stage1_(), stage2_(in) {
             assert(H_%2 == 0);
@@ -74,16 +75,21 @@ namespace perimeter {
             assert(L_ > 0);
             assert(stage2_size > qmc::n_bonds);
             
-            convert_2_to_1();
-            convert_2_to_3();
+            convert_2_to_1_and_3();
             create_loop_layer();
+            winding();
         }
-        loop_real_class(loop_real_class const & arg): H_(arg.H_), L_(arg.L_), stage1_(arg.stage1_), stage2_(arg.stage2_), stage3_(arg.stage3_), stage4_(arg.stage4_) {
+        loop_real_class(loop_real_class const & arg): H_(arg.H_), L_(arg.L_), stage1_(arg.stage1_), stage2_(arg.stage2_), stage3_(arg.stage3_), stage4_(arg.stage4_), windH_(arg.windH_), windL_(arg.windL_), constH_(arg.constH_), constL_(arg.constL_) {
             assert(arg == (*this));
         }
         operator uint64_t() {
             return stage2_.to_ulong();
         }
+        //~ void mutate(stage2_type const & in) {
+            //~ stage2_ = in;
+            //~ convert_2_to_1_and_3();
+            //~ create_loop_layer();
+        //~ }
         //------------------- converter -------------------
         void convert_1_to_2() {
             stage2_ = 0;
@@ -108,7 +114,7 @@ namespace perimeter {
         }
         void convert_1_to_3() {
             stage3_.clear();
-            
+            vert_count_ = std::vector<uint>(7, 0);
             
             for(uint i = 0; i < H_; ++i) {
                 stage3_.push_back(std::vector<bitset_bond>(L_, 0));
@@ -119,6 +125,7 @@ namespace perimeter {
                         if(stage1_[i][j] == '-') {
                             stage3_[i/2][(j-2)/4][qmc::right] = true;
                             stage3_[i/2][((j-2)/4+1)%L_][qmc::left] = true;
+                            ++vert_count_[6];
                         }
                     }
                 }
@@ -127,14 +134,20 @@ namespace perimeter {
                         if(stage1_[i][j] == '|') {
                             stage3_[i/2][j/4][qmc::down] = true;
                             stage3_[(i/2+1)%H_][j/4][qmc::up] = true;
+                            ++vert_count_[5];
                         }
                     }
                 }
             }
+            
+            
             for(uint i = 0; i < H_; ++i) {
                 for(uint j = 0; j < L_; ++j) {
-                    if(stage3_[i][j].count() == 0)
+                    ++vert_count_[stage3_[i][j].count()];
+                    if(stage3_[i][j].count() == 0) {
                         stage3_[i][j][qmc::me] = true;
+                    }
+                        
                 }
             }
         }
@@ -167,11 +180,11 @@ namespace perimeter {
                 }
             }    
         }
-        void convert_2_to_3() {
+        void convert_2_to_1_and_3() {
             convert_2_to_1();
             convert_1_to_3();
         }
-        void convert_3_to_1() {
+        void convert_3_to_1_and_2() {
             convert_3_to_2();
             convert_2_to_1();
         }
@@ -226,11 +239,11 @@ namespace perimeter {
                 }
             }
             
-            //~ for(uint i = 0; i < H_; ++i) {
-                //~ for(uint j = 0; j < L_; ++j) {
-                    //~ stage4_[i][j].check = false;
-                //~ }
-            //~ }
+            for(uint i = 0; i < H_; ++i) {
+                for(uint j = 0; j < L_; ++j) {
+                    stage4_[i][j].check = false;
+                }
+            }
         }
         //------------------- check conformality -------------------
         bool conform() const { //checks if the loop_structure is valid for braket-conversion
@@ -260,46 +273,73 @@ namespace perimeter {
             }
             return true;
         }
-        //~ bool constant_winding() {
-            //~ std::vector<int> windH(H_, 0);
-            //~ std::vector<int> windL(L_, 0);
-            //~ //------------------- winding H -------------------
-            //~ for(uint i = 0; i < 2*H_; ++i) {
-                //~ for(uint j = 0; j < L_; ++j) {
-                    //~ if(i%4 == 0)
-                        //~ windL[j] += stage2_[i * L_ + j];
-                    //~ else if(i%4 == 2)
-                        //~ windL[j] -= stage2_[i * L_ + j];
-                    //~ else 
-                        //~ windH[i/2] += (j%2==0 ? -1:1) *stage2_[i * L_ + j];
-                //~ }
-            //~ }
-    //~ 
-            //~ int start = std::abs(windH[0]);
-            //~ for(uint i = 0; i < H_; ++i) {
-                //~ windH[i] = std::abs(windH[i]);
-                //~ if(start != windH[i])
-                    //~ return false;
-            //~ }
-            //~ 
-            //~ start = std::abs(windL[0]);
-            //~ for(uint j = 0; j < L_; ++j) {
-                //~ windL[j] = std::abs(windL[j]);
-                //~ if(start != windL[j])
-                    //~ return false;
-            //~ }
-            //~ 
-            //~ windH_ = windH[0];
-            //~ windL_ = windL[0];
-            //~ 
-            //~ return true;
-        //~ }
+        void winding() {
+            windH_ = std::vector<int>(H_, 0);
+            windL_ = std::vector<int>(L_, 0);
+            constH_ = true;
+            constL_ = true;
+            //------------------- winding H -------------------
+            for(uint i = 0; i < 2*H_; ++i) {
+                for(uint j = 0; j < L_; ++j) {
+                    if(i%4 == 0)
+                        windL_[j] += stage2_[i * L_ + j];
+                    else if(i%4 == 2)
+                        windL_[j] -= stage2_[i * L_ + j];
+                    else 
+                        windH_[i/2] += (j%2==0 ? -1:1) *stage2_[i * L_ + j];
+                }
+            }
+    
+            //~ int start = std::abs(windH_[0]);
+            int start = windH_[0];
+            for(uint i = 0; i < H_; ++i) {
+                //~ windH_[i] = std::abs(windH_[i]);
+                if(start != windH_[i]) {
+                    constH_ = false;
+                }
+            }
+            
+            //~ start = std::abs(windL_[0]);
+            start = windL_[0];
+            for(uint j = 0; j < L_; ++j) {
+                //~ windL_[j] = std::abs(windL_[j]);
+                if(start != windL_[j]) {
+                    constL_ = false;
+                }
+            }
+        }
         //------------------- getter -------------------
         uint const & H() const {
             return H_;
         }
         uint const & L() const {
             return L_;
+        }
+        bool const & constH() const {
+            return constH_;
+        }
+        bool const & constL() const {
+            return constL_;
+        }
+        uint const windH() const {
+            uint res = 0;
+            uint mult = 1;
+            for(uint i = 0; i < H_; ++i)  {
+                res += mult* (5 + windH_[i]);
+                mult *= 10;
+            }
+            return res;
+            //~ return *std::max_element(windH_.begin(), windH_.end());
+        }
+        uint const windL() const {
+            uint res = 0;
+            uint mult = 1;
+            for(uint j = 0; j < L_; ++j)  {
+                res += mult* (5 + windL_[j]);
+                mult *= 10;
+            }
+            return res;
+            //~ return *std::max_element(windL_.begin(), windL_.end());
         }
         bitset_bond const & operator()(uint const & i, uint const & j) const {
             return stage3_[i][j];
@@ -325,6 +365,14 @@ namespace perimeter {
         }
         uint n_loops(uint size) const {
             return loop_analysis()[size];
+        }
+        uint count() {
+            return stage2_.count();
+        }
+        uint vert_count(uint const & i) const {
+            assert(i < vert_count_.size());
+            return vert_count_[i];
+                
         }
         //------------------- print flags-------------------
         void print(uint stage = 1) const {
@@ -360,10 +408,15 @@ namespace perimeter {
             if((stage&16) == 16) {
                 std::cout << "--------info-loop-------" << std::endl;
                 std::cout << "    loop_nr: " << loop_nr_ << std::endl;
+                std::cout << "    const: " << constH() << "/" << constL() << std::endl;
+                std::cout << "    wind: " << windH() << "/" << windL() << std::endl;
+                std::cout << "    single: " << vert_count(1) << std::endl;
+                std::cout << "    tripple: " << vert_count(3) << std::endl;
             }
         }
         
         //------------------- friends -------------------
+        friend bool identical_winding(loop_real_class const & l1, loop_real_class const & l2);
         friend bool operator==(loop_real_class const & l1, loop_real_class const & l2);
         friend loop_real_class operator&(loop_real_class const & l1, loop_real_class const & l2);
         friend loop_real_class operator|(loop_real_class const & l1, loop_real_class const & l2);
@@ -376,8 +429,20 @@ namespace perimeter {
         stage3_type stage3_;
         stage4_type stage4_;
         uint loop_nr_;
+        std::vector<int> windH_;
+        std::vector<int> windL_;
+        bool constH_;
+        bool constL_;
+        std::vector<uint> vert_count_;
     };
 
+    bool identical_winding(loop_real_class const & l1, loop_real_class const & l2) {
+        if(!std::equal(l1.windH_.begin(), l1.windH_.end(), l2.windH_.begin()))
+            return false;
+        if(!std::equal(l1.windL_.begin(), l1.windL_.end(), l2.windL_.begin()))
+            return false;
+        return true;
+    }
     bool operator==(loop_real_class const & l1, loop_real_class const & l2) {
         if(l1.H_ != l2.H_)
             return false;

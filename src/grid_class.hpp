@@ -221,7 +221,19 @@ namespace perimeter {
             );
             init_loops();
         }
-        
+        uint64_t stage2(state_type const & state) {
+            std::bitset<64> res(0);
+            for(index_type i = 0; i < H_; ++i) {
+                for(index_type j = 0; j < L_; ++j) {
+                    
+                    if(grid_[i][j].bond[state] == qmc::right)
+                        res[2 * i * L_ + j] = 1;
+                    if(grid_[i][j].bond[state] == qmc::down)
+                        res[(2 * i + 1) * L_ + j] = 1;
+                }
+            }
+            return res.to_ulong();
+        }
         //=================== getter ===================
         ///  returns a reference to the site (i, j)
         ///  @param i index for the height
@@ -301,12 +313,12 @@ namespace perimeter {
             );
             return res;
         }
-        loop_type n_cross_loops(state_type const & bra1, state_type const & bra2) const {
-            loop_type res(0);
+        uint64_t n_cross_loops(state_type const & bra1, state_type const & bra2) const {
+            uint64_t res(0);
             auto l = cross_loop_analysis(bra1, bra2);
             std::for_each(l.begin(), l.end(),
                 [&](std::pair<const uint, uint> & p) {
-                    res += p.second;
+                    res += p.second * std::pow(100, p.first - 1);
                 }
             );
             return res;
