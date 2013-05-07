@@ -50,7 +50,7 @@ namespace perimeter {
                 };
             }
             else {
-                std::cout << "file-fail" << std::endl;
+                std::cout << "file-fail in loop_real_class constructor" << std::endl;
             }
             H_ = (stage1_.size()) / 2;
             L_ = (stage1_[0].size()) / 4;
@@ -85,11 +85,149 @@ namespace perimeter {
         operator uint64_t() {
             return stage2_.to_ulong();
         }
-        //~ void mutate(stage2_type const & in) {
-            //~ stage2_ = in;
-            //~ convert_2_to_1_and_3();
-            //~ create_loop_layer();
-        //~ }
+        
+        //------------------- check conformality -------------------
+        bool conform() const { //checks if the loop_structure is valid for braket-conversion
+            for(uint i = 0; i < H_; ++i) {
+                for(uint j = 0; j < L_; ++j) {
+                    if(stage3_[i][j].count() > 2 or stage3_[i][j][qmc::me] == true)
+                        return false;
+                    if(stage3_[i][j].count() == 1) {
+                        if(stage3_[i][j][qmc::down] == true) {
+                            if(stage3_[(i + 1) % H_][j].count() != 1 or stage3_[(i + 1) % H_][j][qmc::up] != true)
+                                return false;
+                        }
+                        else if(stage3_[i][j][qmc::up] == true) {
+                            if(stage3_[(i + H_ - 1) % H_][j].count() != 1 or stage3_[(i + H_ - 1) % H_][j][qmc::down] != true)
+                                return false;
+                        }
+                        else if(stage3_[i][j][qmc::right] == true) {
+                            if(stage3_[i][(j + 1) % L_].count() != 1 or stage3_[i][(j + 1) % L_][qmc::left] != true)
+                                return false;
+                        }
+                        else if(stage3_[i][j][qmc::left] == true) {
+                            if(stage3_[i][(j + L_ - 1) % L_].count() != 1 or stage3_[i][(j + L_ - 1) % L_][qmc::right] != true)
+                                return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        //------------------- getter -------------------
+        uint const & H() const {
+            return H_;
+        }
+        uint const & L() const {
+            return L_;
+        }
+        bool const & constH() const {
+            return constH_;
+        }
+        bool const & constL() const {
+            return constL_;
+        }
+        uint const windH() const {
+            uint res = 0;
+            uint mult = 1;
+            for(uint i = 0; i < H_; ++i)  {
+                res += mult* (5 + windH_[i]);
+                mult *= 10;
+            }
+            return res;
+            //~ return *std::max_element(windH_.begin(), windH_.end());
+        }
+        uint const windL() const {
+            uint res = 0;
+            uint mult = 1;
+            for(uint j = 0; j < L_; ++j)  {
+                res += mult* (5 + windL_[j]);
+                mult *= 10;
+            }
+            return res;
+            //~ return *std::max_element(windL_.begin(), windL_.end());
+        }
+        bitset_bond const & operator()(uint const & i, uint const & j) const {
+            return stage3_[i][j];
+        }
+        std::map<uint, uint> loop_analysis() const {
+            std::map<uint, uint> l;
+            
+            for(uint i = 0; i < H_; ++i) {
+                for(uint j = 0; j < L_; ++j) {
+                    ++(l[stage4_[i][j].loop]);
+                }
+            }
+            std::map<uint, uint> res;
+            std::for_each(l.begin(), l.end(),
+                [&](std::pair<const uint, uint> & p) {
+                    ++(res[p.second]);
+                }
+            );
+            return res;
+        }
+        uint const & n_loops() const {
+            return loop_nr_;
+        }
+        uint n_loops(uint size) const {
+            return loop_analysis()[size];
+        }
+        uint count() {
+            return stage2_.count();
+        }
+        uint vert_count(uint const & i) const {
+            assert(i < vert_count_.size());
+            return vert_count_[i];
+                
+        }
+        //------------------- print flags-------------------
+        void print(uint stage = 1) const {
+            if((stage&1) == 1) {
+                std::cout << "--------stage1-graphical--------" << std::endl;
+                for(uint i = 0; i < stage1_.size(); ++i) {
+                    std::cout << "    " << stage1_[i] << std::endl;
+                }
+            }
+            if((stage&2) == 2) {
+                std::cout << "--------stage2-code--------" << std::endl;
+                std::cout << stage2_ << "  " << stage2_.to_ulong() << std::endl;
+            }
+            if((stage&4) == 4) {
+                std::cout << "--------stage3-neighbor-------" << std::endl;
+                for(uint i = 0; i < H_; ++i) {
+                    for(uint j = 0; j < L_; ++j) {
+                        std::cout << " " << stage3_[i][j];
+                    }
+                    std::cout << std::endl;
+                }
+            }
+            if((stage&8) == 8) {
+                std::cout << "--------stage4-loop-------" << std::endl;
+                for(uint i = 0; i < H_; ++i) {
+                    std::cout << "    ";
+                    for(uint j = 0; j < L_; ++j) {
+                        std::cout << " " << stage4_[i][j].loop;
+                    }
+                    std::cout << std::endl;
+                }
+            }
+            if((stage&16) == 16) {
+                std::cout << "--------info-loop-------" << std::endl;
+                std::cout << "    loop_nr: " << loop_nr_ << std::endl;
+                std::cout << "    const: " << constH() << "/" << constL() << std::endl;
+                std::cout << "    wind: " << windH() << "/" << windL() << std::endl;
+                std::cout << "    single: " << vert_count(1) << std::endl;
+                std::cout << "    tripple: " << vert_count(3) << std::endl;
+            }
+        }
+        
+        //------------------- friends -------------------
+        friend bool identical_winding(loop_real_class const & l1, loop_real_class const & l2);
+        friend bool operator==(loop_real_class const & l1, loop_real_class const & l2);
+        friend loop_real_class operator&(loop_real_class const & l1, loop_real_class const & l2);
+        friend loop_real_class operator|(loop_real_class const & l1, loop_real_class const & l2);
+        friend loop_real_class operator^(loop_real_class const & l1, loop_real_class const & l2);
+    private:
         //------------------- converter -------------------
         void convert_1_to_2() {
             stage2_ = 0;
@@ -207,6 +345,41 @@ namespace perimeter {
             }
         }
         
+        void winding() {
+            windH_ = std::vector<int>(H_, 0);
+            windL_ = std::vector<int>(L_, 0);
+            constH_ = true;
+            constL_ = true;
+            //------------------- winding H -------------------
+            for(uint i = 0; i < 2*H_; ++i) {
+                for(uint j = 0; j < L_; ++j) {
+                    if(i%4 == 0)
+                        windL_[j] += stage2_[i * L_ + j];
+                    else if(i%4 == 2)
+                        windL_[j] -= stage2_[i * L_ + j];
+                    else 
+                        windH_[i/2] += (j%2==0 ? -1:1) *stage2_[i * L_ + j];
+                }
+            }
+    
+            //~ int start = std::abs(windH_[0]);
+            int start = windH_[0];
+            for(uint i = 0; i < H_; ++i) {
+                //~ windH_[i] = std::abs(windH_[i]);
+                if(start != windH_[i]) {
+                    constH_ = false;
+                }
+            }
+            
+            //~ start = std::abs(windL_[0]);
+            start = windL_[0];
+            for(uint j = 0; j < L_; ++j) {
+                //~ windL_[j] = std::abs(windL_[j]);
+                if(start != windL_[j]) {
+                    constL_ = false;
+                }
+            }
+        }
         //------------------- loop creation -------------------
         void recursion_loop(uint const & i, uint const & j, uint const & loop_nr) {
             if(stage4_[i][j].check == true)
@@ -245,182 +418,6 @@ namespace perimeter {
                 }
             }
         }
-        //------------------- check conformality -------------------
-        bool conform() const { //checks if the loop_structure is valid for braket-conversion
-            for(uint i = 0; i < H_; ++i) {
-                for(uint j = 0; j < L_; ++j) {
-                    if(stage3_[i][j].count() > 2 or stage3_[i][j][qmc::me] == true)
-                        return false;
-                    if(stage3_[i][j].count() == 1) {
-                        if(stage3_[i][j][qmc::down] == true) {
-                            if(stage3_[(i + 1) % H_][j].count() != 1 or stage3_[(i + 1) % H_][j][qmc::up] != true)
-                                return false;
-                        }
-                        else if(stage3_[i][j][qmc::up] == true) {
-                            if(stage3_[(i + H_ - 1) % H_][j].count() != 1 or stage3_[(i + H_ - 1) % H_][j][qmc::down] != true)
-                                return false;
-                        }
-                        else if(stage3_[i][j][qmc::right] == true) {
-                            if(stage3_[i][(j + 1) % L_].count() != 1 or stage3_[i][(j + 1) % L_][qmc::left] != true)
-                                return false;
-                        }
-                        else if(stage3_[i][j][qmc::left] == true) {
-                            if(stage3_[i][(j + L_ - 1) % L_].count() != 1 or stage3_[i][(j + L_ - 1) % L_][qmc::right] != true)
-                                return false;
-                        }
-                    }
-                }
-            }
-            return true;
-        }
-        void winding() {
-            windH_ = std::vector<int>(H_, 0);
-            windL_ = std::vector<int>(L_, 0);
-            constH_ = true;
-            constL_ = true;
-            //------------------- winding H -------------------
-            for(uint i = 0; i < 2*H_; ++i) {
-                for(uint j = 0; j < L_; ++j) {
-                    if(i%4 == 0)
-                        windL_[j] += stage2_[i * L_ + j];
-                    else if(i%4 == 2)
-                        windL_[j] -= stage2_[i * L_ + j];
-                    else 
-                        windH_[i/2] += (j%2==0 ? -1:1) *stage2_[i * L_ + j];
-                }
-            }
-    
-            //~ int start = std::abs(windH_[0]);
-            int start = windH_[0];
-            for(uint i = 0; i < H_; ++i) {
-                //~ windH_[i] = std::abs(windH_[i]);
-                if(start != windH_[i]) {
-                    constH_ = false;
-                }
-            }
-            
-            //~ start = std::abs(windL_[0]);
-            start = windL_[0];
-            for(uint j = 0; j < L_; ++j) {
-                //~ windL_[j] = std::abs(windL_[j]);
-                if(start != windL_[j]) {
-                    constL_ = false;
-                }
-            }
-        }
-        //------------------- getter -------------------
-        uint const & H() const {
-            return H_;
-        }
-        uint const & L() const {
-            return L_;
-        }
-        bool const & constH() const {
-            return constH_;
-        }
-        bool const & constL() const {
-            return constL_;
-        }
-        uint const windH() const {
-            uint res = 0;
-            uint mult = 1;
-            for(uint i = 0; i < H_; ++i)  {
-                res += mult* (5 + windH_[i]);
-                mult *= 10;
-            }
-            return res;
-            //~ return *std::max_element(windH_.begin(), windH_.end());
-        }
-        uint const windL() const {
-            uint res = 0;
-            uint mult = 1;
-            for(uint j = 0; j < L_; ++j)  {
-                res += mult* (5 + windL_[j]);
-                mult *= 10;
-            }
-            return res;
-            //~ return *std::max_element(windL_.begin(), windL_.end());
-        }
-        bitset_bond const & operator()(uint const & i, uint const & j) const {
-            return stage3_[i][j];
-        }
-        std::map<uint, uint> loop_analysis() const {
-            std::map<uint, uint> l;
-            
-            for(uint i = 0; i < H_; ++i) {
-                for(uint j = 0; j < L_; ++j) {
-                    ++(l[stage4_[i][j].loop]);
-                }
-            }
-            std::map<uint, uint> res;
-            std::for_each(l.begin(), l.end(),
-                [&](std::pair<const uint, uint> & p) {
-                    ++(res[p.second]);
-                }
-            );
-            return res;
-        }
-        uint const & n_loops() const {
-            return loop_nr_;
-        }
-        uint n_loops(uint size) const {
-            return loop_analysis()[size];
-        }
-        uint count() {
-            return stage2_.count();
-        }
-        uint vert_count(uint const & i) const {
-            assert(i < vert_count_.size());
-            return vert_count_[i];
-                
-        }
-        //------------------- print flags-------------------
-        void print(uint stage = 1) const {
-            if((stage&1) == 1) {
-                std::cout << "--------stage1-graphical--------" << std::endl;
-                for(uint i = 0; i < stage1_.size(); ++i) {
-                    std::cout << "    " << stage1_[i] << std::endl;
-                }
-            }
-            if((stage&2) == 2) {
-                std::cout << "--------stage2-code--------" << std::endl;
-                std::cout << stage2_ << "  " << stage2_.to_ulong() << std::endl;
-            }
-            if((stage&4) == 4) {
-                std::cout << "--------stage3-neighbor-------" << std::endl;
-                for(uint i = 0; i < H_; ++i) {
-                    for(uint j = 0; j < L_; ++j) {
-                        std::cout << " " << stage3_[i][j];
-                    }
-                    std::cout << std::endl;
-                }
-            }
-            if((stage&8) == 8) {
-                std::cout << "--------stage4-loop-------" << std::endl;
-                for(uint i = 0; i < H_; ++i) {
-                    std::cout << "    ";
-                    for(uint j = 0; j < L_; ++j) {
-                        std::cout << " " << stage4_[i][j].loop;
-                    }
-                    std::cout << std::endl;
-                }
-            }
-            if((stage&16) == 16) {
-                std::cout << "--------info-loop-------" << std::endl;
-                std::cout << "    loop_nr: " << loop_nr_ << std::endl;
-                std::cout << "    const: " << constH() << "/" << constL() << std::endl;
-                std::cout << "    wind: " << windH() << "/" << windL() << std::endl;
-                std::cout << "    single: " << vert_count(1) << std::endl;
-                std::cout << "    tripple: " << vert_count(3) << std::endl;
-            }
-        }
-        
-        //------------------- friends -------------------
-        friend bool identical_winding(loop_real_class const & l1, loop_real_class const & l2);
-        friend bool operator==(loop_real_class const & l1, loop_real_class const & l2);
-        friend loop_real_class operator&(loop_real_class const & l1, loop_real_class const & l2);
-        friend loop_real_class operator|(loop_real_class const & l1, loop_real_class const & l2);
-        friend loop_real_class operator^(loop_real_class const & l1, loop_real_class const & l2);
     private:
         uint H_;
         uint L_;

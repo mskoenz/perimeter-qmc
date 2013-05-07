@@ -33,10 +33,10 @@ namespace perimeter {
             , bra = 0
             , bra2
             //~ , bra3
-            //~ , bra4
-            //~ , bra5
-            //~ , ket5
-            //~ , ket4
+            , swap_bra1
+            , swap_bra2
+            , swap_ket2
+            , swap_ket1
             //~ , ket3
             , ket2
             , ket
@@ -59,8 +59,8 @@ namespace perimeter {
             , left
             , up
             , n_bonds
-            , diag_down
             , hori
+            , diag_down
             , diag_up
             , none
             , invert_bond = n_bonds - 1 + start_bond
@@ -82,12 +82,14 @@ namespace perimeter {
         
     }
     ///  \brief the type of the sites in the grid
+
+    typedef int spin_type; ///< the spin type, for now just an int
+    typedef uint loop_type; ///< used for the loop label
+    typedef uint bond_type; ///< based on bond_enum, but since the enum is not usable as an index, its an uint
+    typedef uint8_t check_type; ///< used for the check variable. a bool would also work, but an uint8_t needs the same space and provides more option
+    typedef uint state_type; ///< names the type of the state. again, casting from and to enum all the time would be cumbersome
+
     struct site_struct {
-        typedef int spin_type; ///< the spin type, for now just an int
-        typedef uint loop_type; ///< used for the loop label
-        typedef uint bond_type; ///< based on bond_enum, but since the enum is not usable as an index, its an uint
-        typedef uint8_t check_type; ///< used for the check variable. a bool would also work, but an uint8_t needs the same space and provides more option
-        typedef uint state_type; ///< names the type of the state. again, casting from and to enum all the time would be cumbersome
         
         ///  \brief default constructor
         site_struct(): check(0) {
@@ -198,7 +200,7 @@ namespace perimeter {
                 res << WHITE << go << NONE;
             else
                 if(bond[s1] == b)
-                    res << YELLOW << go << NONE;
+                    res << MAGENTA << go << NONE;
                 else
                     if(bond[s2] == b)
                         res << GREEN << go << NONE;

@@ -39,15 +39,6 @@ namespace perimeter {
         ///  the used vector_type
         template<typename U> 
         using vector_type = std::vector<U>;
-        
-        ///  just for shorter notation
-        typedef typename site_type::loop_type loop_type;
-        ///  just for shorter notation
-        typedef typename site_type::check_type check_type;
-        ///  just for shorter notation
-        typedef typename site_type::state_type state_type;
-        ///  just for shorter notation
-        typedef typename site_type::bond_type bond_type;
     public:
         ///  normally a uint
         typedef typename vector_type<site_type>::size_type index_type;
@@ -55,10 +46,10 @@ namespace perimeter {
         ///  
         ///  @param H height of the grid
         ///  @param L length of the grid
-        ///  @param init says how the grid should be initialized
+        ///  @param init says how the grids should be initialized
         ///  
         ///  nearly all asserts are located in this constructor
-        inline grid_class(uint const H, uint const L, uint const init = 0): 
+        inline grid_class(uint const H, uint const L, std::vector<uint> const & init = std::vector<uint>(qmc::n_bra, 0)): 
                 H_(H)
               , L_(L)
               , grid_(boost::extents[H_][L_]) 
@@ -115,7 +106,7 @@ namespace perimeter {
         void clear_check(){
             std::for_each(begin(), end(), 
                 [&](site_type & s) {
-                    --(s.check);
+                    s.check = check_type();
                 }
             );
         }
@@ -215,11 +206,12 @@ namespace perimeter {
         }
         void state_swap(state_type const & s1, state_type const & s2) {
             std::for_each(begin(), end(),
-                [](site_struct & s){
-                    std::swap(s.bond[qmc::ket], s.bond[qmc::ket2]);
+                [&](site_struct & s){
+                    if(s.spin[qmc::invert_state - s1] == true) //abuse of name, spin == region
+                        std::swap(s.bond[s1], s.bond[s2]);
                 }
             );
-            init_loops();
+            //~ init_loops();
         }
         uint64_t stage2(state_type const & state) {
             std::bitset<64> res(0);
@@ -285,9 +277,13 @@ namespace perimeter {
         loop_type n_all_loops() const {
             loop_type res(0);
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
-                res += n_loops_[bra];
+                if(bra != qmc::swap_bra1 and bra != qmc::swap_bra2)
+                    res += n_loops_[bra];
             }
             return res;
+        }
+        loop_type n_swap_loops() const {
+            return n_loops_[qmc::swap_bra1] + n_loops_[qmc::swap_bra2];
         }
         loop_type n_all_loops(loop_type size) const {
             loop_type res(0);
@@ -345,6 +341,13 @@ namespace perimeter {
                 next = next_in_loop(next, bra);
             } while(delay != start);
         }
+        //------------------- swap -------------------
+        template<typename T>
+        void swap_region(T const & region) {
+            copy_to_swap(qmc::bra, qmc::bra2, region);
+            state_swap(qmc::swap_ket1, qmc::swap_ket2);
+            build_swap_loops();
+        }
         //=================== print and iterate ===================
         ///  \brief print function
         ///  
@@ -369,7 +372,12 @@ namespace perimeter {
         ///  @param os is the stream that is printed into. Default is the std::cout ostream
         void print_all(std::ostream & os = std::cout) const {
             for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
-                os << "state nr: " << bra << std::endl;
+                if(bra == qmc::swap_bra1)
+                    os << "swap state 1" << std::endl;
+                else if(bra == qmc::swap_bra2)
+                    os << "swap state 2" << std::endl;
+                else
+                    os << "state nr: " << bra << std::endl;
                 const uint kmax = site_type::print_site_height();
                 
                 array_type<std::string> s(boost::extents[kmax * H_][L_]);
@@ -401,22 +409,24 @@ namespace perimeter {
         site_type * end() {
             return grid_.data() + grid_.num_elements();
         }
+        
     private:
         ///  \brief used by the constructor
         ///  
-        ///@param init says how the grid should be initialized
+        ///@param init says how the grids should be initialized
         ///  
         ///  is only used once by the constructor at the start. initializes spin and bond structure
-        void init_grid(uint const init) {
+        void init_grid(std::vector<uint> const init) {
             int state = 0;
-            std::for_each(begin(), end(), 
-                [&](site_type & s) {
-                    for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
+            
+            for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
+                std::for_each(begin(), end(), 
+                    [&](site_type & s) {
                         state_type ket = qmc::invert_state - bra;
                         alternator_[bra] = bra;
                         s.spin[bra] = (state + state / L_)%2 == 0 ? qmc::beta : qmc::alpha;
                         
-                        if(init == 0) {
+                        if(init[bra] == 0) {
                             if(qmc::n_bonds == qmc::hex) {
                                 s.bond[bra] = qmc::hori;
                                 s.bond[ket] = qmc::hori;
@@ -426,11 +436,11 @@ namespace perimeter {
                                 s.bond[ket] = (state%2==0 ? qmc::right:qmc::left);
                             }
                         }
-                        else if(init == 1) {
+                        else if(init[bra] == 1) {
                             s.bond[bra] = (state/L_%2==0 ? qmc::down:qmc::up);
                             s.bond[ket] = (state/L_%2==0 ? qmc::down:qmc::up);
                         }
-                        else if(init == 2) {
+                        else if(init[bra] == 2) {
                             if(qmc::n_bonds == qmc::hex) {
                                 s.bond[bra] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
                                 s.bond[ket] = (state/L_%3==0 ? qmc::down: (state/L_%3==2 ? qmc::hori : qmc::up));
@@ -441,10 +451,10 @@ namespace perimeter {
                             }
                         }
                         s.loop[bra] = state;
-                    }
                     ++state;
-                }
-            );
+                    }
+                );
+            }
             //initialising the neighbor structure
             for(uint i = 0; i < H_; ++i) {
                 for(uint j = 0; j < L_; ++j) {
@@ -503,7 +513,7 @@ namespace perimeter {
                 ++(next->check);
                 next->loop[bra] = loop_var;
                 next = next_in_loop(next, bra);
-            } while(next != start and next->check != 1);
+            } while(next != start);
         }
         uint find_lowest(uint const & nr) const {
             assert(nr != 0);
@@ -575,8 +585,86 @@ namespace perimeter {
             //old partner of the new partner does the same
             old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
         }
+        //------------------- swap -------------------
+                
+        template<typename T>
+        void copy_to_swap(state_type const & bra1, state_type const & bra2, T const & region) {
+            std::map<loop_type, bool> loops_in_zone;
+            for(index_type i = 0; i < H_; ++i) {
+                for(index_type j = 0; j < L_; ++j) {
+                    grid_[i][j].loop[qmc::swap_bra1] = grid_[i][j].loop[bra1];
+                    grid_[i][j].bond[qmc::swap_bra1] = grid_[i][j].bond[bra1];
+                    grid_[i][j].bond[qmc::swap_ket1] = grid_[i][j].bond[qmc::invert_state - bra1];
+                    
+                    grid_[i][j].loop[qmc::swap_bra2] = grid_[i][j].loop[bra2] + (H_ * L_ / 2);
+                    grid_[i][j].bond[qmc::swap_bra2] = grid_[i][j].bond[bra2];
+                    grid_[i][j].bond[qmc::swap_ket2] = grid_[i][j].bond[qmc::invert_state - bra2];
+                    
+                    assert(grid_[i][j].check == 0);
+                    
+                    bool swap_zone = region(i, j);
+                    
+                    if(swap_zone) {
+                        loops_in_zone[grid_[i][j].loop[qmc::swap_bra1]] = 1;
+                        loops_in_zone[grid_[i][j].loop[qmc::swap_bra2]] = 1;
+                    }
+                    
+                    grid_[i][j].spin[qmc::swap_bra1] = swap_zone; //abuse of var-name, but saves memory
+                    grid_[i][j].spin[qmc::swap_bra2] = !swap_zone; //abuse of var-name, but saves memory
+                }
+            }
+            n_loops_[qmc::swap_bra1] = n_loops_[bra1] + n_loops_[bra2] - loops_in_zone.size();
+            n_loops_[qmc::swap_bra2] = 0; //doesn't hold any usefull information
+        }
         
-    
+        void build_swap_loops() {
+            //------------------- first implementation -------------------
+            loop_type loop_nr = H_ * L_;
+            std::for_each(begin(), end(),
+                [&](site_type & s) {
+                    if(s.spin[qmc::swap_bra1] == true)
+                        if((s.check & (1<<qmc::swap_bra1)) != (1<<qmc::swap_bra1)) {
+                            follow_loop_swap(&s, loop_nr, qmc::swap_bra1);
+                            ++loop_nr;
+                            ++n_loops_[qmc::swap_bra1];
+                        }
+                }
+            );
+            std::for_each(begin(), end(),
+                [&](site_type & s) {
+                    if(s.spin[qmc::swap_bra1] == true)
+                        if((s.check & (1<<qmc::swap_bra2)) != (1<<qmc::swap_bra2)) {
+                            follow_loop_swap(&s, loop_nr, qmc::swap_bra2);
+                            ++loop_nr;
+                            ++n_loops_[qmc::swap_bra1];
+                        }
+                }
+            );
+            assert(n_loops_[qmc::swap_bra2] == 0);
+            clear_check();
+        }
+        
+        void follow_loop_swap(site_type * start, loop_type const & loop_var, state_type const & bra) {
+            site_type * next = start;
+            site_type * peek = start;
+            state_type level = bra;
+            do {
+                (next->check) |= (1<<level);
+                next->loop[level] = loop_var;
+                peek = next_in_loop(next, level);
+                if(peek->spin[level] != next->spin[level]) {
+                    if(alternator_[level] == qmc::swap_ket1) {
+                        level = qmc::swap_bra2;
+                        alternator_[level] = qmc::swap_ket2;
+                    }
+                    else if(alternator_[level] == qmc::swap_ket2) {
+                        level = qmc::swap_bra1;
+                        alternator_[level] = qmc::swap_ket1;
+                    }
+                }
+                next = peek;
+            } while(next != start or level != bra);
+        }
     private:
         uint const H_; ///<height
         uint const L_; ///<length

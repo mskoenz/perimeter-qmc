@@ -6,8 +6,9 @@
 #define __SIM_CLASS_HEADER
 
 #include <grid_class.hpp>
+#include <swap_region_class.hpp>
+
 #include <random2_msk.hpp>
-#include <timer2_msk.hpp>
 
 #include <map>
 #include <algorithm>
@@ -20,15 +21,11 @@ namespace perimeter
     class sim_class {
         typedef typename grid_class::index_type index_type;
         typedef typename grid_class::site_type site_type;
-        typedef typename grid_class::site_type::spin_type spin_type;
-        typedef typename grid_class::site_type::state_type state_type;
-        typedef typename grid_class::site_type::bond_type bond_type;
-        typedef typename grid_class::site_type::check_type check_type;
     public:
         sim_class(std::map<std::string, double> param):   H_(param["-H"])
                                                         , L_(param["-L"])
                                                         , param_(param)
-                                                        , grid_(H_, L_, param["-init"]) 
+                                                        , grid_(H_, L_, {uint(param["-init0"]), uint(param["-init1"]), uint(param["-init2"]), uint(param["-init3"]), uint(param["-init4"])}) 
                                                         , rngS_() 
                                                         , p(param_["-p"]){
             std::cout << "Parameter" << std::endl;

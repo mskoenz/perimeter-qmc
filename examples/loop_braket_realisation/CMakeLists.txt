@@ -1,9 +1,6 @@
-FOREACH (name   measure_periodic_access
-                grid_playground
-                grid_performance_test
-                multi_grid_state_test
-                rng_example
-                loop_analysis
+FOREACH (name   loop_to_braket_realisation
+                test_loop_realisator
+                config_collider
     )
     add_executable(${name} ${name}.cpp)
     add_dependencies(${name} build_nr) #increases the build-number
