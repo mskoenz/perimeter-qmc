@@ -5,9 +5,20 @@
 #ifndef __TIMER2_MSK_HEADER
 #define __TIMER2_MSK_HEADER
 
-#include <boost/timer/timer.hpp>
+//~ #define __TIMER2_MSK_USE_BOOST_CLOCK
+#define __TIMER2_MSK_USE_C_CLOCK
 
-#include <time.h>
+//~ #define __TIMER2_MSK_USE_C11_CLOCK
+//~ #define __TIMER2_MSK_WHAT_C11_CLOCK std::chrono::system_clock
+//~ #define __TIMER2_MSK_WHAT_C11_CLOCK std::chrono::high_resolution_clock
+
+#ifdef __TIMER2_MSK_USE_BOOST_CLOCK
+    #include <boost/timer/timer.hpp>
+#elif defined(__TIMER2_MSK_USE_C11_CLOCK)
+    #include <chrono>
+#endif
+
+#include <ctime>
 
 #include <iostream>
 #include <string>
@@ -109,6 +120,11 @@ namespace addon {
         timer_class<T>(uint64_t workload = 1, std::string const & name = default_name): 
                                                               name_(name)
                                                             , work_(workload)
+                                                            #ifdef __TIMER2_MSK_USE_C_CLOCK
+                                                              , start_t(std::clock())
+                                                            #elif defined(__TIMER2_MSK_USE_C11_CLOCK)
+                                                              , start_t(__TIMER2_MSK_WHAT_C11_CLOCK::now())
+                                                            #endif
                                                             , written_(0)
                                                             , comment_("")
                                                             , last_print_(0)
@@ -133,7 +149,7 @@ namespace addon {
         }
         ///  \brief returns the elapsed usertime in [s]
         operator double() {
-            return timer_.elapsed().user / 1000000000.0;
+            return elapsed();
         }
         ///  \brief returns the last mesured loop-time in [us]
         double loop_time() {
@@ -234,7 +250,15 @@ namespace addon {
         ///  
         ///  works the same as the double cast
         double elapsed() {
-            return timer_.elapsed().user / 1000000000.0;
+            #ifdef __TIMER2_MSK_USE_BOOST_CLOCK
+                return timer_.elapsed().user / 1000000000.0;
+            #elif defined(__TIMER2_MSK_USE_C_CLOCK)
+                return (std::clock() - start_t) / double(CLOCKS_PER_SEC);
+            #elif defined(__TIMER2_MSK_USE_C11_CLOCK)
+                return std::chrono::duration_cast<std::chrono::duration<double>>(__TIMER2_MSK_WHAT_C11_CLOCK::now() - start_t).count();
+            #else
+                return 0;
+            #endif
         }
         ///  \brief the file-writer
         ///  
@@ -389,7 +413,15 @@ namespace addon {
         std::string const name_;
         std::ofstream of_;
         uint64_t work_;
-        boost::timer::cpu_timer timer_;
+        
+        #ifdef __TIMER2_MSK_USE_BOOST_CLOCK
+            boost::timer::cpu_timer timer_;
+        #elif defined(__TIMER2_MSK_USE_C_CLOCK)
+            std::clock_t start_t;
+        #elif defined(__TIMER2_MSK_USE_C11_CLOCK)
+            __TIMER2_MSK_WHAT_C11_CLOCK::time_point start_t;
+        #endif
+        
         int written_;
         std::string names_[10];
         std::string comment_;

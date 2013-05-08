@@ -96,6 +96,7 @@ namespace perimeter {
             for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
                 loop[bra] = 0;
                 spin[bra] = qmc::beta;
+                spin[qmc::invert_state - bra] = qmc::beta;
                 bond[bra] = qmc::none;
                 bond[qmc::invert_state - bra] = qmc::none;
             }
@@ -107,6 +108,7 @@ namespace perimeter {
             for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
                 loop[bra] = 0;
                 spin[bra] = spin_in;
+                spin[qmc::invert_state - bra] = spin_in;
                 bond[bra] = qmc::none;
                 bond[qmc::invert_state - bra] = qmc::none;
             }
@@ -184,7 +186,7 @@ namespace perimeter {
             return 3;
         }
         
-        spin_type spin[qmc::n_bra]; ///< looplabel for each transitiongraph, since bra and ket have to have the same spin
+        spin_type spin[qmc::n_states]; ///< looplabel for state
         loop_type loop[qmc::n_bra]; ///< looplabel for each transitiongraph
         bond_type bond[qmc::n_states]; ///< bond-direction for each state
         site_struct * neighbor[qmc::n_bonds]; ///< pointes structure to determine neighbor relations. same for all states

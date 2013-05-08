@@ -173,7 +173,7 @@ namespace perimeter {
         ///  @param bra is the corresponing bra of state. if state is a bra, then its equal to state. needed as index for the transition graph
         bond_type two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
             for(bond_type b = qmc::start_bond; b < qmc::n_bonds; ++b) {
-                if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[bra] != target.neighbor[b]->spin[bra]) {
+                if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[state] != target.neighbor[b]->spin[state]) {
                     return b;
                 }
             }
@@ -195,6 +195,7 @@ namespace perimeter {
                 do {
                     ++(next->check);
                     next->spin[bra] = qmc::invert_spin - next->spin[bra];
+                    next->spin[qmc::invert_state - bra] = qmc::invert_spin - next->spin[qmc::invert_state - bra];
                     next = next_in_loop(next, bra);
                 } while(next != start);
             } else {
@@ -370,8 +371,14 @@ namespace perimeter {
         ///  \brief print function
         ///  
         ///  @param os is the stream that is printed into. Default is the std::cout ostream
-        void print_all(std::ostream & os = std::cout) const {
-            for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
+        void print_all(std::vector<state_type> state = std::vector<state_type>(), std::ostream & os = std::cout) const {
+            if(state.size() == 0) {
+                for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
+                    state.push_back(bra);
+                }
+            }
+            for(index_type i = 0; i < state.size(); ++i) {
+                state_type bra = state[i];
                 if(bra == qmc::swap_bra1)
                     os << "swap state 1" << std::endl;
                 else if(bra == qmc::swap_bra2)
@@ -425,6 +432,7 @@ namespace perimeter {
                         state_type ket = qmc::invert_state - bra;
                         alternator_[bra] = bra;
                         s.spin[bra] = (state + state / L_)%2 == 0 ? qmc::beta : qmc::alpha;
+                        s.spin[qmc::invert_state - bra] = (state + state / L_)%2 == 0 ? qmc::beta : qmc::alpha;
                         
                         if(init[bra] == 0) {
                             if(qmc::n_bonds == qmc::hex) {
