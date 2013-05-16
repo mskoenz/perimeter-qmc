@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
     
     sim.grid().swap_region(sw);
     uint l2 = sim.grid().n_swap_loops();
-    sim.grid().print_all({qmc::bra, qmc::swap_bra1}, uint(addon::parameter["-f"]));
+    sim.grid().print_all({qmc::bra, qmc::swap_bra1, qmc::swap_bra2}, uint(addon::parameter["-f"]));
     std::cout << "l2 after invertswap: " << l2 << std::endl;
     
     return 0;

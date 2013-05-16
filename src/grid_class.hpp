@@ -111,6 +111,15 @@ namespace perimeter {
             );
         }
         
+        template<typename F>
+        void follow_loop_tpl(site_type * const start, state_type const & bra, F fct) {
+            site_type * next = start;
+            do {
+                fct(next);
+                next = next_in_loop(next, bra);
+            } while(next != start);
+        }
+        
         /*///  \brief performs a two bond update with a split
         ///  
         ///  @param target is the input site
@@ -131,7 +140,11 @@ namespace perimeter {
             if(qmc::n_bonds == qmc::tri) {
                 loop_type tl = target->loop[bra];
                 
-                follow_loop_once(old_partner, available_[bra].back(), bra);
+                follow_loop_tpl(old_partner, bra, 
+                    [&](site_type * next) {
+                        next->loop[bra] = available_[bra].back();
+                    }
+                );
                 if(tl == target->loop[bra]) {
                     available_[bra].pop_back();
                     ++n_loops_[bra];
@@ -143,7 +156,11 @@ namespace perimeter {
                 }
             }
             else {
-                follow_loop_once(old_partner, available_[bra].back(), bra);
+                follow_loop_tpl(old_partner, bra, 
+                    [&](site_type * next) {
+                        next->loop[bra] = available_[bra].back();
+                    }
+                );
                 available_[bra].pop_back();
                 ++n_loops_[bra];
             }
@@ -163,7 +180,13 @@ namespace perimeter {
             //rename before join
             available_[bra].push_back(target->neighbor[b]->loop[bra]);
             --n_loops_[bra];
-            follow_loop_once(target->neighbor[b], target->loop[bra], bra);
+            
+            follow_loop_tpl(target->neighbor[b], bra, 
+                    [&](site_type * next) {
+                        next->loop[bra] = target->loop[bra];
+                    }
+                );
+            
             
             two_bond_flip(target, old_partner, b, state);
         }
@@ -182,33 +205,6 @@ namespace perimeter {
                 }
             }
             return qmc::none;
-        }
-        
-        /*///  \brief follows a loop, changes the spins if flip is true and checks it as visited. global operation
-        ///  
-        ///  @param start can be any node in the target loop
-        ///  @param flip decides, if all spins in the loop get flipped
-        ///  @param bra describes the wanted transition graph. since the spins of bra and ket must
-        ///  be identical, its enough to just specify bra
-        ///  
-        ///  while following the loop and eventually changing the spin for this transition-graph, the
-        ///  visited sites are flaged as checked. therefore one need to uncheck the sites at the end of the
-        ///  operation with clear_check()*/
-        void follow_loop_spin(site_type * start, bool const & flip, state_type const & bra) {
-            site_type * next = start;
-            if(flip) {
-                do {
-                    next->check[bra] = true;
-                    next->spin[bra] = qmc::invert_spin - next->spin[bra];
-                    next->spin[qmc::invert_state - bra] = qmc::invert_spin - next->spin[qmc::invert_state - bra];
-                    next = next_in_loop(next, bra);
-                } while(next != start);
-            } else {
-                do {
-                    next->check[bra] = true;
-                    next = next_in_loop(next, bra);
-                } while(next != start);
-            }
         }
         
         void state_swap(state_type const & s1, state_type const & s2) {
@@ -250,7 +246,7 @@ namespace perimeter {
             return grid_[i][j];
         }
         
-        //------------------- loop analysis -------------------
+        //=================== loop analysis ===================
         /*///  \brief returns a map with infos about the loopsize-distribution
         ///  
         ///  @param bra is the index for the transition graph
@@ -309,7 +305,7 @@ namespace perimeter {
             return res;
         }
         
-        //------------------- cross loop analysis -------------------
+        //=================== cross loop analysis ===================
         std::map<uint, uint> cross_loop_analysis(state_type const & bra1, state_type const & bra2) const {
             std::map<uint, uint> l;
             for(index_type i = 0; i < H_; ++i)  {
@@ -344,6 +340,7 @@ namespace perimeter {
         
         void change_loop(state_type const &  bra, loop_type const & loop) {
             site_struct * start = NULL;
+            //find a site that is part of the loop
             for(index_type i = 0; i < H_; ++i)  {
                 for(index_type j = 0; j < L_; ++j)  {
                     if(grid_[i][j].loop[bra] == loop) {
@@ -354,6 +351,7 @@ namespace perimeter {
             }
             site_struct * next = next_in_loop(start, bra);
             site_struct * delay = start;
+            //swap bra and ket configuration of this loop
             do {
                 std::swap(delay->bond[bra], delay->bond[qmc::invert_state - bra]);
                 delay = next;
@@ -361,7 +359,7 @@ namespace perimeter {
             } while(delay != start);
         }
         
-        //------------------- swap -------------------
+        //=================== swap ===================
         template<typename T>
         void swap_region(T const & region) {
             copy_to_swap(qmc::bra, qmc::bra2, region);
@@ -541,32 +539,19 @@ namespace perimeter {
                     [&](site_type & s) {
                         if(s.check[bra] == false)
                         {
-                            follow_loop(&s, n_loops_[bra], bra);
+                            //~ follow_loop(&s, n_loops_[bra], bra);
+                            follow_loop_tpl(&s, bra, 
+                                [&](site_type * next){
+                                    next->check[bra] = true;
+                                    next->loop[bra] = n_loops_[bra];
+                                }
+                            );
                             ++n_loops_[bra];
                         }
                     }
                 );
                 clear_check();
             }
-        }
-        
-        /*///  \brief follows a loop, changes the loop labels and checks it as visited. global operation
-        ///  
-        ///  @param start can be any node in the target loop
-        ///  @param loop_var is the value one wants to assign to this loop
-        ///  @param bra describes the wanted transition graph. since there are only half as many transition graphs
-        ///  as states, only the bra must be given here.
-        ///  
-        ///  while following the loop and changing the loop variable for this transition-graph, the
-        ///  visited sites are flaged as checked. therefore one need to uncheck the sites at the end of the
-        ///  operation with clear_check(). is only used to initialize the loops*/
-        void follow_loop(site_type * start, loop_type const & loop_var, state_type const & bra) {
-            site_type * next = start;
-            do {
-                next->check[bra] = true;
-                next->loop[bra] = loop_var;
-                next = next_in_loop(next, bra);
-            } while(next != start);
         }
         
         uint find_lowest(uint const & nr) const {
@@ -577,8 +562,8 @@ namespace perimeter {
             return shift;
         }
         
-        void follow_loop_build(site_struct * start, uint const & bra) {
-            uint state = bra;
+        void follow_loop_build(site_struct * const start, uint const & bra) {
+            state_type state = bra;
             site_struct * next = start;
             do {
                 next->check[bra] = true;
@@ -601,29 +586,11 @@ namespace perimeter {
             } while(next != start);
         }
         
-        /*///  \brief follows a loop, changes the loop label without checking them as visited. local operation
-        ///  
-        ///  @param start can be any node in the target loop
-        ///  @param loop_var is the value one wants to assign to this loop
-        ///  @param bra describes the wanted transition graph. since there are only half as many transition graphs
-        ///  as states, only the bra must be given here.
-        ///  
-        ///  follows the loop and changes the loop variable without marking the visited sites. a clear_check()
-        ///  is not neccessary*/
-        void follow_loop_once(site_type * start, loop_type const & loop_var, state_type const & bra) {
-            site_type * next = start;
-            do {
-                next->loop[bra] = loop_var;
-                next = next_in_loop(next, bra);
-            } while(next != start);
-        }
-        
         /*///  \brief returns next site in the loop
         ///  
         ///  @param in is the input site
         ///  @param bra describes what transition graph is chosen*/
-        
-        site_type * next_in_loop(site_type * in, state_type const & bra) {
+        site_type * next_in_loop(site_type * const in, state_type const & bra) {
             alternator_[bra] = qmc::invert_state - alternator_[bra];
             return in->partner(alternator_[bra]);
         }
@@ -635,7 +602,7 @@ namespace perimeter {
         ///  @param b is the direction of the bond of target and old_partner after the update
         ///  @param state names the choosen state in which the flip should occure*/
         
-        void two_bond_flip(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state) {
+        void two_bond_flip(site_type * const target, site_type * const old_partner, bond_type const & b, state_type const & state) {
             //target node shows in the dircetion of the neighbor with the same orientation
             target->bond[state] = b;
             //old partner does the same
@@ -707,7 +674,7 @@ namespace perimeter {
             clear_check();
         }
         
-        void follow_loop_swap(site_type * start, loop_type const & loop_var, state_type const & bra) {
+        void follow_loop_swap(site_type * const start, loop_type const & loop_var, state_type const & bra) {
             site_type * next = start;
             site_type * peek = start;
             state_type level = bra;

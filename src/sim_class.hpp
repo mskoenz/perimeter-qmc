@@ -57,14 +57,27 @@ namespace perimeter
         }
         
         void spin_update(state_type const & bra) {
-            bool flip;
             
             std::for_each(grid_.begin(), grid_.end(), 
                 [&](site_type & s) {
                     if(s.check[bra] == false)
                     {
-                        flip = (rngS_() > .5);
-                        grid_.follow_loop_spin(&s, flip, bra);
+                        if(rngS_() > .5) {
+                            grid_.follow_loop_tpl(&s, bra, 
+                                [&](site_type * next) {
+                                    next->check[bra] = true;
+                                }
+                            );
+                        }
+                        else {
+                            grid_.follow_loop_tpl(&s, bra, 
+                                [&](site_type * next) {
+                                    next->check[bra] = true;
+                                    next->spin[bra] = qmc::invert_spin - next->spin[bra];
+                                    next->spin[qmc::invert_state - bra] = qmc::invert_spin - next->spin[qmc::invert_state - bra];
+                                }
+                            );
+                        }
                     }
                 }
             );
