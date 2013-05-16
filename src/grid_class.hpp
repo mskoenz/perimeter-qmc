@@ -42,13 +42,13 @@ namespace perimeter {
     public:
         ///  normally a uint
         typedef typename vector_type<site_type>::size_type index_type;
-        ///  \brief standart constructor
+        /*///  \brief standart constructor
         ///  
         ///  @param H height of the grid
         ///  @param L length of the grid
         ///  @param init says how the grids should be initialized
         ///  
-        ///  nearly all asserts are located in this constructor
+        ///  nearly all asserts are located in this constructor*/
         inline grid_class(uint const H, uint const L, std::vector<uint> const & init = std::vector<uint>(qmc::n_bra, 0)): 
                 H_(H)
               , L_(L)
@@ -88,10 +88,9 @@ namespace perimeter {
                 }
             }
             //=================== construct bond-structure ===================
-            uint const level = 1;
             std::for_each(begin(), end(), 
                 [&](site_struct & s) {
-                    if(s.check != level) {
+                    if(s.check[bra] == false) {
                         follow_loop_build(&s, bra);
                     }
                 }
@@ -99,10 +98,11 @@ namespace perimeter {
             clear_check();
             init_loops();
         }
-        ///  \brief resets the flag, that a site has been visited
+        
+        /*///  \brief resets the flag, that a site has been visited
         ///  
         ///  all states use the same check-flag, since only one state is changed at a certain time.
-        ///  this fct resets the check-flag for all sites
+        ///  this fct resets the check-flag for all sites*/
         void clear_check(){
             std::for_each(begin(), end(), 
                 [&](site_type & s) {
@@ -110,7 +110,8 @@ namespace perimeter {
                 }
             );
         }
-        ///  \brief performs a two bond update with a split
+        
+        /*///  \brief performs a two bond update with a split
         ///  
         ///  @param target is the input site
         ///  @param old_partner is the old partner of the target
@@ -122,6 +123,7 @@ namespace perimeter {
         ///  the fact that the partners where in the same loop is sufficient to predict a split. this doesn't hold
         ///  for triangular grids. so even though the fuction is called split, it doesn't split in certain circumstances
         ///  for triangular grids
+        */
         void two_bond_split(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state, state_type const & bra) {
             two_bond_flip(target, old_partner, b, state);
             
@@ -146,7 +148,8 @@ namespace perimeter {
                 ++n_loops_[bra];
             }
         }
-        ///  \brief performs a two bond update with a join
+        
+        /*///  \brief performs a two bond update with a join
         ///  
         ///  @param target is the input site
         ///  @param old_partner is the old partner of the target
@@ -155,7 +158,7 @@ namespace perimeter {
         ///  @param bra is the corresponing bra of state. if state is a bra, then its equal to state. needed as index for the transition graph
         ///  
         ///  joins the loop of target and new_partner. the fact that they didn't have the same loop label is 
-        ///  sufficient to predict a join
+        ///  sufficient to predict a join*/
         void two_bond_join(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state, state_type const & bra) {
             //rename before join
             available_[bra].push_back(target->neighbor[b]->loop[bra]);
@@ -164,13 +167,14 @@ namespace perimeter {
             
             two_bond_flip(target, old_partner, b, state);
         }
-        ///  \brief returns the neighbor direction in which an update is possible (qmc::none if not possible)
+        
+        /*///  \brief returns the neighbor direction in which an update is possible (qmc::none if not possible)
         ///  
         ///  @param target is the input site
         ///  @param old_partner is the old partner of the target
         ///  @param b is the direction of the bond of target and old_partner after the update
         ///  @param state names the choosen state in which the flip should occure
-        ///  @param bra is the corresponing bra of state. if state is a bra, then its equal to state. needed as index for the transition graph
+        ///  @param bra is the corresponing bra of state. if state is a bra, then its equal to state. needed as index for the transition graph*/
         bond_type two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
             for(bond_type b = qmc::start_bond; b < qmc::n_bonds; ++b) {
                 if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[state] != target.neighbor[b]->spin[state]) {
@@ -179,7 +183,8 @@ namespace perimeter {
             }
             return qmc::none;
         }
-        ///  \brief follows a loop, changes the spins if flip is true and checks it as visited. global operation
+        
+        /*///  \brief follows a loop, changes the spins if flip is true and checks it as visited. global operation
         ///  
         ///  @param start can be any node in the target loop
         ///  @param flip decides, if all spins in the loop get flipped
@@ -188,23 +193,24 @@ namespace perimeter {
         ///  
         ///  while following the loop and eventually changing the spin for this transition-graph, the
         ///  visited sites are flaged as checked. therefore one need to uncheck the sites at the end of the
-        ///  operation with clear_check()
+        ///  operation with clear_check()*/
         void follow_loop_spin(site_type * start, bool const & flip, state_type const & bra) {
             site_type * next = start;
             if(flip) {
                 do {
-                    ++(next->check);
+                    next->check[bra] = true;
                     next->spin[bra] = qmc::invert_spin - next->spin[bra];
                     next->spin[qmc::invert_state - bra] = qmc::invert_spin - next->spin[qmc::invert_state - bra];
                     next = next_in_loop(next, bra);
                 } while(next != start);
             } else {
                 do {
-                    ++(next->check);
+                    next->check[bra] = true;
                     next = next_in_loop(next, bra);
                 } while(next != start);
             }
         }
+        
         void state_swap(state_type const & s1, state_type const & s2) {
             std::for_each(begin(), end(),
                 [&](site_struct & s){
@@ -214,6 +220,7 @@ namespace perimeter {
             );
             //~ init_loops();
         }
+        
         uint64_t stage2(state_type const & state) {
             std::bitset<64> res(0);
             for(index_type i = 0; i < H_; ++i) {
@@ -227,25 +234,28 @@ namespace perimeter {
             }
             return res.to_ulong();
         }
+        
         //=================== getter ===================
-        ///  returns a reference to the site (i, j)
+        /*///  returns a reference to the site (i, j)
         ///  @param i index for the height
-        ///  @param j index for the lenght
+        ///  @param j index for the lenght*/
         site_type & operator()(index_type const i, index_type const j) {
             return grid_[i][j];
         }
-        ///  returns a const reference to the site (i, j)
+        
+        /*///  returns a const reference to the site (i, j)
         ///  @param i index for the height
-        ///  @param j index for the lenght
+        ///  @param j index for the lenght*/
         site_type const & operator()(index_type const i, index_type const j) const {
             return grid_[i][j];
         }
+        
         //------------------- loop analysis -------------------
-        ///  \brief returns a map with infos about the loopsize-distribution
+        /*///  \brief returns a map with infos about the loopsize-distribution
         ///  
         ///  @param bra is the index for the transition graph
         ///  
-        ///  returns a map with the loop lenght as key an the amount of occurance as value (devide by (H*L)/2 for percentage)
+        ///  returns a map with the loop lenght as key an the amount of occurance as value (devide by (H*L)/2 for percentage)*/
         std::map<uint, uint> loop_analysis(state_type const & bra) const {
             std::map<uint, uint> l;
             for(index_type i = 0; i < H_; ++i)  {
@@ -262,6 +272,7 @@ namespace perimeter {
             );
             return res;
         }
+        
         loop_type n_loops(state_type const &  bra) const {
             loop_type res(0);
             auto l = loop_analysis(bra);
@@ -272,9 +283,11 @@ namespace perimeter {
             );
             return res;
         }
+        
         loop_type n_loops(state_type const &  bra, loop_type const & size) const {
             return loop_analysis(bra)[size];
         }
+        
         loop_type n_all_loops() const {
             loop_type res(0);
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
@@ -283,9 +296,11 @@ namespace perimeter {
             }
             return res;
         }
+        
         loop_type n_swap_loops() const {
             return n_loops_[qmc::swap_bra1] + n_loops_[qmc::swap_bra2];
         }
+        
         loop_type n_all_loops(loop_type size) const {
             loop_type res(0);
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
@@ -293,6 +308,7 @@ namespace perimeter {
             }
             return res;
         }
+        
         //------------------- cross loop analysis -------------------
         std::map<uint, uint> cross_loop_analysis(state_type const & bra1, state_type const & bra2) const {
             std::map<uint, uint> l;
@@ -310,6 +326,7 @@ namespace perimeter {
             );
             return res;
         }
+        
         uint64_t n_cross_loops(state_type const & bra1, state_type const & bra2) const {
             uint64_t res(0);
             auto l = cross_loop_analysis(bra1, bra2);
@@ -320,6 +337,7 @@ namespace perimeter {
             );
             return res;
         }
+        
         loop_type n_cross_loops(state_type const & bra1, state_type const & bra2, loop_type size) const {
             return cross_loop_analysis(bra1, bra2)[size];
         }
@@ -342,6 +360,7 @@ namespace perimeter {
                 next = next_in_loop(next, bra);
             } while(delay != start);
         }
+        
         //------------------- swap -------------------
         template<typename T>
         void swap_region(T const & region) {
@@ -349,12 +368,13 @@ namespace perimeter {
             state_swap(qmc::swap_ket1, qmc::swap_ket2);
             build_swap_loops();
         }
+        
         //=================== print and iterate ===================
-        ///  \brief print function
+        /*///  \brief print function
         ///  
         ///  @param os is the stream that is printed into. Default is the std::cout ostream
         ///  
-        ///  Prints all transitions graphs. 
+        ///  Prints all transitions graphs. */
         void print(std::ostream & os = std::cout) const {
             for(state_type bra = qmc::start_bond; bra != qmc::n_bra; ++bra) {
                 os << "state nr: " << bra << std::endl;
@@ -368,10 +388,11 @@ namespace perimeter {
                 }
             }
         }
-        ///  \brief print function
+        
+        /*///  \brief print function
         ///  
-        ///  @param os is the stream that is printed into. Default is the std::cout ostream
-        void print_all(std::vector<state_type> state = std::vector<state_type>(), std::ostream & os = std::cout) const {
+        ///  @param os is the stream that is printed into. Default is the std::cout ostream*/
+        void print_all(std::vector<state_type> state = std::vector<state_type>(), uint flags = 1, std::ostream & os = std::cout) const {
             if(state.size() == 0) {
                 for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
                     state.push_back(bra);
@@ -387,13 +408,34 @@ namespace perimeter {
                     os << "state nr: " << bra << std::endl;
                 const uint kmax = site_type::print_site_height();
                 
-                array_type<std::string> s(boost::extents[kmax * H_][L_]);
+                array_type<std::string> s(boost::extents[kmax * H_][5]);
                 vector_type<std::string> in;
                 for(index_type i = 0; i < H_; ++i) {
-                    for(index_type j = 0; j < L_; ++j) {
-                        in = grid_[i][j].string_print(L_, bra);
-                        for(index_type k = 0; k < kmax; ++k) {
-                            s[i * kmax + k][j] = in[k];
+                    
+                    if((flags & 1) == 1) { //print tragsition graph
+                        for(index_type j = 0; j < L_; ++j) {
+                            in = grid_[i][j].string_print(L_, bra, 0);
+                            for(index_type k = 0; k < kmax; ++k) {
+                                s[i * kmax + k][0] += in[k];
+                                s[i * kmax + k][1] = "      ";
+                            }
+                        }
+                    }
+                    if((flags & 2) == 2) { //print bra
+                        for(index_type j = 0; j < L_; ++j) {
+                            in = grid_[i][j].string_print(L_, bra, 1);
+                            for(index_type k = 0; k < kmax; ++k) {
+                                s[i * kmax + k][2] += in[k];
+                                s[i * kmax + k][3] = "      ";
+                            }
+                        }
+                    }
+                    if((flags & 4) == 4) { //print ket
+                        for(index_type j = 0; j < L_; ++j) {
+                            in = grid_[i][j].string_print(L_, bra, 2);
+                            for(index_type k = 0; k < kmax; ++k) {
+                                s[i * kmax + k][4] += in[k];
+                            }
                         }
                     }
                 }
@@ -402,27 +444,29 @@ namespace perimeter {
                         for(index_type j = 0; j < H_*kmax - i; ++j)
                             os << " ";
                         
-                    for(index_type j = 0; j < L_; ++j)
+                    for(index_type j = 0; j < 5; ++j)
                         os << s[i][j];
                     os << std::endl;
                 }
             }
         }
+        
         ///  \brief can be used to traverse the array
         site_type * begin() {
             return grid_.data();
         }
+        
         ///  \brief can be used to traverse the array
         site_type * end() {
             return grid_.data() + grid_.num_elements();
         }
         
     private:
-        ///  \brief used by the constructor
+        /*///  \brief used by the constructor
         ///  
         ///@param init says how the grids should be initialized
         ///  
-        ///  is only used once by the constructor at the start. initializes spin and bond structure
+        ///  is only used once by the constructor at the start. initializes spin and bond structure*/
         void init_grid(std::vector<uint> const init) {
             int state = 0;
             
@@ -485,17 +529,17 @@ namespace perimeter {
                 }
             }
         }
-        ///  \brief used by the constructor
+        
+        /*///  \brief used by the constructor
         ///  
-        ///  is also only used once by the constructor at the start. initializes the loop labels
+        ///  is also only used once by the constructor at the start. initializes the loop labels*/
         void init_loops() {
             for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
                 available_[bra].clear();
-                check_type const level = 1;
                 n_loops_[bra] = 0;
                 std::for_each(begin(), end(), 
                     [&](site_type & s) {
-                        if(s.check != level)
+                        if(s.check[bra] == false)
                         {
                             follow_loop(&s, n_loops_[bra], bra);
                             ++n_loops_[bra];
@@ -505,7 +549,8 @@ namespace perimeter {
                 clear_check();
             }
         }
-        ///  \brief follows a loop, changes the loop labels and checks it as visited. global operation
+        
+        /*///  \brief follows a loop, changes the loop labels and checks it as visited. global operation
         ///  
         ///  @param start can be any node in the target loop
         ///  @param loop_var is the value one wants to assign to this loop
@@ -514,15 +559,16 @@ namespace perimeter {
         ///  
         ///  while following the loop and changing the loop variable for this transition-graph, the
         ///  visited sites are flaged as checked. therefore one need to uncheck the sites at the end of the
-        ///  operation with clear_check(). is only used to initialize the loops
+        ///  operation with clear_check(). is only used to initialize the loops*/
         void follow_loop(site_type * start, loop_type const & loop_var, state_type const & bra) {
             site_type * next = start;
             do {
-                ++(next->check);
+                next->check[bra] = true;
                 next->loop[bra] = loop_var;
                 next = next_in_loop(next, bra);
             } while(next != start);
         }
+        
         uint find_lowest(uint const & nr) const {
             assert(nr != 0);
             int shift = 0;
@@ -530,11 +576,12 @@ namespace perimeter {
                 ++shift;
             return shift;
         }
+        
         void follow_loop_build(site_struct * start, uint const & bra) {
             uint state = bra;
             site_struct * next = start;
             do {
-                ++(next->check);
+                next->check[bra] = true;
                 int lowest = find_lowest(next->loop[bra]);
                 int invert = qmc::invert_bond-lowest;
                 if(next->loop[bra] - (1 << lowest) > 0)
@@ -553,7 +600,8 @@ namespace perimeter {
                 state = qmc::invert_state - state;
             } while(next != start);
         }
-        ///  \brief follows a loop, changes the loop label without checking them as visited. local operation
+        
+        /*///  \brief follows a loop, changes the loop label without checking them as visited. local operation
         ///  
         ///  @param start can be any node in the target loop
         ///  @param loop_var is the value one wants to assign to this loop
@@ -561,7 +609,7 @@ namespace perimeter {
         ///  as states, only the bra must be given here.
         ///  
         ///  follows the loop and changes the loop variable without marking the visited sites. a clear_check()
-        ///  is not neccessary
+        ///  is not neccessary*/
         void follow_loop_once(site_type * start, loop_type const & loop_var, state_type const & bra) {
             site_type * next = start;
             do {
@@ -569,20 +617,24 @@ namespace perimeter {
                 next = next_in_loop(next, bra);
             } while(next != start);
         }
-        ///  \brief returns next site in the loop
+        
+        /*///  \brief returns next site in the loop
         ///  
         ///  @param in is the input site
-        ///  @param bra describes what transition graph is chosen
+        ///  @param bra describes what transition graph is chosen*/
+        
         site_type * next_in_loop(site_type * in, state_type const & bra) {
             alternator_[bra] = qmc::invert_state - alternator_[bra];
             return in->partner(alternator_[bra]);
         }
-        ///  \brief performs the two_bond update for the bonds
+        
+        /*///  \brief performs the two_bond update for the bonds
         ///  
         ///  @param target is the input site
         ///  @param old_partner is the old partner of the target
         ///  @param b is the direction of the bond of target and old_partner after the update
-        ///  @param state names the choosen state in which the flip should occure
+        ///  @param state names the choosen state in which the flip should occure*/
+        
         void two_bond_flip(site_type * target, site_type * old_partner, bond_type const & b, state_type const & state) {
             //target node shows in the dircetion of the neighbor with the same orientation
             target->bond[state] = b;
@@ -593,6 +645,7 @@ namespace perimeter {
             //old partner of the new partner does the same
             old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
         }
+        
         //------------------- swap -------------------
                 
         template<typename T>
@@ -619,6 +672,8 @@ namespace perimeter {
                     
                     grid_[i][j].spin[qmc::swap_bra1] = swap_zone; //abuse of var-name, but saves memory
                     grid_[i][j].spin[qmc::swap_bra2] = !swap_zone; //abuse of var-name, but saves memory
+                    grid_[i][j].spin[qmc::swap_ket1] = !swap_zone; //abuse of var-name, but saves memory
+                    grid_[i][j].spin[qmc::swap_ket2] = swap_zone; //abuse of var-name, but saves memory
                 }
             }
             n_loops_[qmc::swap_bra1] = n_loops_[bra1] + n_loops_[bra2] - loops_in_zone.size();
@@ -631,7 +686,7 @@ namespace perimeter {
             std::for_each(begin(), end(),
                 [&](site_type & s) {
                     if(s.spin[qmc::swap_bra1] == true)
-                        if((s.check & (1<<qmc::swap_bra1)) != (1<<qmc::swap_bra1)) {
+                        if(s.check[qmc::swap_bra1] == 0) {
                             follow_loop_swap(&s, loop_nr, qmc::swap_bra1);
                             ++loop_nr;
                             ++n_loops_[qmc::swap_bra1];
@@ -641,7 +696,7 @@ namespace perimeter {
             std::for_each(begin(), end(),
                 [&](site_type & s) {
                     if(s.spin[qmc::swap_bra1] == true)
-                        if((s.check & (1<<qmc::swap_bra2)) != (1<<qmc::swap_bra2)) {
+                        if(s.check[qmc::swap_bra2] == 0) {
                             follow_loop_swap(&s, loop_nr, qmc::swap_bra2);
                             ++loop_nr;
                             ++n_loops_[qmc::swap_bra1];
@@ -657,7 +712,7 @@ namespace perimeter {
             site_type * peek = start;
             state_type level = bra;
             do {
-                (next->check) |= (1<<level);
+                next->check[level] = true;
                 next->loop[level] = loop_var;
                 peek = next_in_loop(next, level);
                 if(peek->spin[level] != next->spin[level]) {

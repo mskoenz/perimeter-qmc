@@ -181,18 +181,18 @@ namespace perimeter {
                 
         }
         //------------------- print flags-------------------
-        void print(uint stage = 1) const {
-            if((stage&1) == 1) {
+        void print(uint flags = 1) const {
+            if((flags&1) == 1) {
                 std::cout << "--------stage1-graphical--------" << std::endl;
                 for(uint i = 0; i < stage1_.size(); ++i) {
                     std::cout << "    " << stage1_[i] << std::endl;
                 }
             }
-            if((stage&2) == 2) {
+            if((flags&2) == 2) {
                 std::cout << "--------stage2-code--------" << std::endl;
                 std::cout << stage2_ << "  " << stage2_.to_ulong() << std::endl;
             }
-            if((stage&4) == 4) {
+            if((flags&4) == 4) {
                 std::cout << "--------stage3-neighbor-------" << std::endl;
                 for(uint i = 0; i < H_; ++i) {
                     for(uint j = 0; j < L_; ++j) {
@@ -201,8 +201,8 @@ namespace perimeter {
                     std::cout << std::endl;
                 }
             }
-            if((stage&8) == 8) {
-                std::cout << "--------stage4-loop-------" << std::endl;
+            if((flags&8) == 8) {
+                std::cout << "--------flags4-loop-------" << std::endl;
                 for(uint i = 0; i < H_; ++i) {
                     std::cout << "    ";
                     for(uint j = 0; j < L_; ++j) {
@@ -211,7 +211,7 @@ namespace perimeter {
                     std::cout << std::endl;
                 }
             }
-            if((stage&16) == 16) {
+            if((flags&16) == 16) {
                 std::cout << "--------info-loop-------" << std::endl;
                 std::cout << "    loop_nr: " << loop_nr_ << std::endl;
                 std::cout << "    const: " << constH() << "/" << constL() << std::endl;

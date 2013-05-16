@@ -57,12 +57,11 @@ namespace perimeter
         }
         
         void spin_update(state_type const & bra) {
-            check_type const level = 1;
             bool flip;
             
             std::for_each(grid_.begin(), grid_.end(), 
                 [&](site_type & s) {
-                    if(s.check != level)
+                    if(s.check[bra] == false)
                     {
                         flip = (rngS_() > .5);
                         grid_.follow_loop_spin(&s, flip, bra);

@@ -23,6 +23,7 @@ addon::parameter.get();
 #include <map>
 #include <vector>
 #include <sstream>
+#include <stdexcept>
 
 //timer2_msk.hpp documents addon
 namespace addon
@@ -97,6 +98,16 @@ namespace addon
                 res[it->first] = *(it->second);
             }
             return res;
+        }
+        ///  \brief returns the value to key
+        ///  
+        ///  just an abreviation for parameter.get()["key"]
+        double operator[](std::string const & key) {
+            if(dict.find(key) != dict.end())
+                return *dict[key];
+            else
+                throw std::runtime_error("key not found in bash_parameter");
+            return 0;
         }
         
     private:

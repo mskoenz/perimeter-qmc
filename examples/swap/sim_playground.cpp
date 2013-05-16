@@ -16,6 +16,8 @@ int main(int argc, char* argv[])
     addon::parameter.set("init0", 0);
     addon::parameter.set("init1", 1);
     addon::parameter.set("p", 0.5);
+    addon::parameter.set("f", 1);
+    addon::parameter.set("g", 0);
     
     //~ addon::parameter.set("H", 4);
     //~ addon::parameter.set("L", 4);
@@ -36,10 +38,12 @@ int main(int argc, char* argv[])
     sim.grid().print_all({qmc::swap_bra1});
     std::cout << "l1 after swap: " << l1 << std::endl;
     
-    sw.invert();
+    sw.set_grow({qmc::up, qmc::down, qmc::right, qmc::left});
+    sw.grow(addon::parameter["-g"]);
+    
     sim.grid().swap_region(sw);
     uint l2 = sim.grid().n_swap_loops();
-    sim.grid().print_all({qmc::swap_bra1});
+    sim.grid().print_all({qmc::bra, qmc::swap_bra1}, uint(addon::parameter["-f"]));
     std::cout << "l2 after invertswap: " << l2 << std::endl;
     
     return 0;

@@ -12,8 +12,7 @@
 #include <site_struct.hpp>
 
 namespace perimeter {
-    class swap_region_class
-    {
+    class swap_region_class {
     public:
         swap_region_class(std::string filename): grow_level_(0) {
             std::ifstream in(filename);
@@ -42,15 +41,15 @@ namespace perimeter {
             }
             convert_1_to_2();
         }
-        void print(uint stage = 1) const {
-            if((stage&1) == 1) {
+        void print(uint flags = 1) const {
+            if((flags&1) == 1) {
                 std::cout << "--------stage1-graphical--------" << std::endl;
                 for(uint i = 0; i < stage1_.size(); ++i) {
                     std::cout << "    " << stage1_[i] << std::endl;
                 }
             }
-            if((stage&2) == 2) {
-                std::cout << "--------stage2-bool-matrix--------" << std::endl;
+            if((flags&2) == 2) {
+                std::cout << "--------stage2-matrix--------" << std::endl;
                 for(uint i = 0; i < H_; ++i) {
                     std::cout << "    ";
                     for(uint j = 0; j < L_; ++j) {
@@ -174,9 +173,6 @@ namespace perimeter {
         std::vector<bond_type> grow_dir_;
         uint grow_level_;
     };
-    
-    
-    
 }//end namespace perimeter
 
 #endif //__SWAP_REGION_CLASS_HEADER

@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
+#include <bitset>
 
 #include <boost/integer.hpp>
 #include <addons/color.hpp>
@@ -86,7 +87,7 @@ namespace perimeter {
     typedef int spin_type; ///< the spin type, for now just an int
     typedef uint loop_type; ///< used for the loop label
     typedef uint bond_type; ///< based on bond_enum, but since the enum is not usable as an index, its an uint
-    typedef uint8_t check_type; ///< used for the check variable. a bool would also work, but an uint8_t needs the same space and provides more option
+    typedef std::bitset<qmc::n_states> check_type; ///< used for the check variable. a bool would also work, but an uint8_t needs the same space and provides more option
     typedef uint state_type; ///< names the type of the state. again, casting from and to enum all the time would be cumbersome
 
     struct site_struct {
@@ -124,29 +125,29 @@ namespace perimeter {
             os << spin[s12];
         }
         ///  \brief the fancy print-function used by the grid_class
-        std::vector<std::string> const string_print(uint const & L, state_type const & s1) const {
+        std::vector<std::string> const string_print(uint const & L, state_type const & s1, uint const & what) const {
             std::vector<std::string> res;
             std::stringstream os;
             
             if(qmc::n_bonds == qmc::sqr) {
-                os << "  " << print_bond(qmc::up, "|", "", s1) << std::left << std::setw(3) << loop[s1]%1000 << std::right << print_bond(qmc::up, "", " ", s1);
+                os << "  " << print_bond(qmc::up, "|", "", s1, what) << std::left << std::setw(3) << loop[s1]%1000 << std::right << print_bond(qmc::up, "", " ", s1, what);
                 res.push_back(os.str()); 
                 os.str("");//reset ss
-                os << print_bond(qmc::left, "--", "  ", s1) << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE << print_bond(qmc::right, "---", "   ", s1);
+                os << print_bond(qmc::left, "--", "  ", s1, what) << print_spin(s1, what) << print_bond(qmc::right, "---", "   ", s1, what);
                 res.push_back(os.str());
                 os.str("");//reset ss
-                os << "  " << print_bond(qmc::down, "|", " ", s1) << " " << "  ";
+                os << "  " << print_bond(qmc::down, "|", " ", s1, what) << " " << "  ";
                 res.push_back(os.str());
                 return res;
             }
             if(qmc::n_bonds == qmc::tri) {
-                os << print_bond(qmc::diag_up, "\\", " ", s1) << " " << print_bond(qmc::up, "/", "", s1) << std::left << std::setw(3) << loop[s1]%1000 << std::right << print_bond(qmc::up, "", " ", s1);
+                os << print_bond(qmc::diag_up, "\\", " ", s1, what) << " " << print_bond(qmc::up, "/", "", s1, what) << std::left << std::setw(3) << loop[s1]%1000 << std::right << print_bond(qmc::up, "", " ", s1, what);
                 res.push_back(os.str()); 
                 os.str("");//reset ss
-                os << print_bond(qmc::left, "--", "  ", s1) << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE << print_bond(qmc::right, "---", "   ", s1);
+                os << print_bond(qmc::left, "--", "  ", s1, what) << print_spin(s1, what) << print_bond(qmc::right, "---", "   ", s1, what);
                 res.push_back(os.str());
                 os.str("");//reset ss
-                os << "  " << print_bond(qmc::down, "/", " ", s1) << " " << print_bond(qmc::diag_down, "\\ ", "  ", s1);
+                os << "  " << print_bond(qmc::down, "/", " ", s1, what) << " " << print_bond(qmc::diag_down, "\\ ", "  ", s1, what);
                 res.push_back(os.str());
                 return res;
             }
@@ -154,23 +155,23 @@ namespace perimeter {
                 static uint alternate = true;
                 
                 if(alternate%2) {
-                    os << "    " << print_bond(qmc::up, "\\", " ", s1) << "    ";
+                    os << "    " << print_bond(qmc::up, "\\", " ", s1, what) << "    ";
                     res.push_back(os.str()); 
                     os.str("");//reset ss
-                    os << " " << std::setw(3) << loop[s1]%1000 << " " << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE << print_bond(qmc::hori, "---", "   ", s1);
+                    os << " " << std::setw(3) << loop[s1]%1000 << " " << print_spin(s1, what) << print_bond(qmc::hori, "---", "   ", s1, what);
                     res.push_back(os.str());
                     os.str("");//reset ss
-                    os << "    " << print_bond(qmc::down, "/", " ", s1) << "    ";
+                    os << "    " << print_bond(qmc::down, "/", " ", s1, what) << "    ";
                     res.push_back(os.str());
                 }
                 else {
-                    os << "   " << print_bond(qmc::up, "/", " ", s1) << "     ";
+                    os << "   " << print_bond(qmc::up, "/", " ", s1, what) << "     ";
                     res.push_back(os.str()); 
                     os.str("");//reset ss
-                    os << print_bond(qmc::hori, "--", "  ", s1) << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE << " " << std::left << std::setw(3) << loop[s1]%1000 << std::right << "  ";
+                    os << print_bond(qmc::hori, "--", "  ", s1, what) << print_spin(s1, what) << " " << std::left << std::setw(3) << loop[s1]%1000 << std::right << "  ";
                     res.push_back(os.str());
                     os.str("");//reset ss
-                    os << "   " << print_bond(qmc::down, "\\", " ", s1) << "     ";
+                    os << "   " << print_bond(qmc::down, "\\", " ", s1, what) << "     ";
                     res.push_back(os.str());
                 }
                 ++alternate;
@@ -194,20 +195,56 @@ namespace perimeter {
     
     private:
         ///  \brief plots the bonds in differente colors, depending how the config is
-        std::string print_bond(qmc::bond_enum b, std::string go, std::string no, state_type const & s1) const {
+        std::string print_bond(qmc::bond_enum b, std::string go, std::string no, state_type const & s1, uint const & what) const {
             std::stringstream res;
             state_type s2 = qmc::invert_state - s1;
             
-            if(bond[s1] == b and bond[s2] == b)
-                res << WHITE << go << NONE;
-            else
+            if(what == 0) { //print bra and ket
+                if(bond[s1] == b and bond[s2] == b)
+                    res << WHITE << go << NONE;
+                else
+                    if(bond[s1] == b)
+                        res << MAGENTA << go << NONE;
+                    else
+                        if(bond[s2] == b)
+                            res << GREEN << go << NONE;
+                        else
+                            res << no;
+            }
+            else if(what == 1) { //print bra only
                 if(bond[s1] == b)
                     res << MAGENTA << go << NONE;
                 else
-                    if(bond[s2] == b)
-                        res << GREEN << go << NONE;
-                    else
-                        res << no;
+                    res << no;
+            }
+            else if(what == 2) { //print ket only
+                if(bond[s2] == b)
+                    res << GREEN << go << NONE;
+                else
+                    res << no;
+            }
+                
+            return res.str();
+        }
+        
+        std::string print_spin(state_type const & s1, uint const & what) const {
+            std::stringstream res;
+            
+            state_type s2 = qmc::invert_state - s1;
+            
+            if(what == 0) { //print bra and ket
+                if(spin[s1] != spin[s2])
+                    res << REDB << "X" << NONE;
+                else
+                    res << BLUEB << "O" << NONE;
+            }
+            else if(what == 1) { //print bra only
+                res << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE;
+            }
+            else if(what == 2) { //print ket only
+                res << (spin[s2] == 0 ? BLUEB : REDB) << spin[s2] << NONE;
+            }
+            
             return res.str();
         }
     };
