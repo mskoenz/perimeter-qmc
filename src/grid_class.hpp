@@ -210,14 +210,88 @@ namespace perimeter {
         void state_swap(state_type const & s1, state_type const & s2) {
             std::for_each(begin(), end(),
                 [&](site_struct & s){
-                    if(s.spin[qmc::invert_state - s1] == true) //abuse of name, spin == region
+                    if(s.swap_lvl[qmc::invert_state - s1] == true)
                         std::swap(s.bond[s1], s.bond[s2]);
                 }
             );
             //~ init_loops();
         }
         
+        template<typename T> //T must suport an operator()(uint, uint, uint)
+        void set_swap_lvl(T const & region) {
+            
+            //set the swap_lvl (only bra)
+            for(state_type bra = qmc::start_state; bra < qmc::n_bra - 2; ++bra) {
+                state_type ket = qmc::invert_state - bra;
+                for(index_type i = 0; i < H_; ++i)
+                    for(index_type j = 0; j < L_; ++j) {
+                        grid_[i][j].swap_lvl[bra] = region(bra, i, j);
+                        grid_[i][j].swap_lvl[ket] = 0;
+                        //~ grid_[i][j].swap_lvl[ket] = qmc::n_states - 1 - region(bra, i, j); //TODO
+                    }
+            }
+            //swap the kets
+            for(state_type bra = qmc::start_state; bra < qmc::n_bra - 2; ++bra) {
+                state_type ket = qmc::invert_state - bra;
+                for(index_type i = 0; i < H_; ++i)
+                    for(index_type j = 0; j < L_; ++j) {
+                        if(grid_[i][j].swap_lvl[bra] > bra) {
+                            std::swap(grid_[i][j].bond[qmc::invert_state - grid_[i][j].swap_lvl[bra]], grid_[i][j].bond[ket]);
+                        }
+                    }
+            }
+            //label the loops
+            uint loop_var = 0;
+            for(state_type bra = qmc::start_state; bra < qmc::n_bra - 2; ++bra) {
+                for(index_type i = 0; i < H_; ++i) {
+                    for(index_type j = 0; j < L_; ++j) {
+                        if(grid_[i][j].check[bra] != true) {
+                            follow_loop_multi_swap(&grid_[i][j], loop_var, bra);
+                            ++loop_var;
+                        }
+                    }
+                }
+            }
+        }
+        
+        void follow_loop_multi_swap(site_type * const start, loop_type const & loop_var, state_type const & bra) {
+            site_type * next = start;
+            site_type * peek = start;
+            state_type level = bra;
+                
+            if(next->swap_lvl[level] != bra){ //start with bra if level not swap_lvl
+                alternator_[level] = qmc::invert_state - bra;
+            }
+            
+            do {
+                next->check[level] = true;
+                next->loop[level] = loop_var;
+                peek = next_in_loop(next, level);
+                if(peek->swap_lvl[level] != next->swap_lvl[level]) {
+                    if(alternator_[level] > qmc::n_bra) { //it's a ket
+                        if(level != next->swap_lvl[level]) {
+                            
+                            level = next->swap_lvl[level];
+                            
+                            if(level != peek->swap_lvl[level]) { //double jump
+                                level = peek->swap_lvl[level];
+                            }
+                            
+                        }
+                        else
+                            level = peek->swap_lvl[level];
+                        
+                        alternator_[level] = qmc::invert_state - level;
+                    }
+                }
+                next = peek;
+            } while(next != start or level != bra);
+        }
+        
+        
+        
         uint64_t stage2(state_type const & state) {
+            assert(H_ * L_ * 2 > 64);
             std::bitset<64> res(0);
             for(index_type i = 0; i < H_; ++i) {
                 for(index_type j = 0; j < L_; ++j) {
@@ -373,8 +447,9 @@ namespace perimeter {
         ///  @param os is the stream that is printed into. Default is the std::cout ostream
         ///  
         ///  Prints all transitions graphs. */
-        void print(std::ostream & os = std::cout) const {
-            for(state_type bra = qmc::start_bond; bra != qmc::n_bra; ++bra) {
+        void print(std::vector<state_type> state = std::vector<state_type>(), std::ostream & os = std::cout) const {
+            for(index_type i = 0; i < state.size(); ++i) {
+                state_type bra = state[i];
                 os << "state nr: " << bra << std::endl;
                 for(index_type i = 0; i < H_; ++i) {
                     for(index_type j = 0; j < L_; ++j) {
@@ -637,10 +712,10 @@ namespace perimeter {
                         loops_in_zone[grid_[i][j].loop[qmc::swap_bra2]] = 1;
                     }
                     
-                    grid_[i][j].spin[qmc::swap_bra1] = swap_zone; //abuse of var-name, but saves memory
-                    grid_[i][j].spin[qmc::swap_bra2] = !swap_zone; //abuse of var-name, but saves memory
-                    grid_[i][j].spin[qmc::swap_ket1] = !swap_zone; //abuse of var-name, but saves memory
-                    grid_[i][j].spin[qmc::swap_ket2] = swap_zone; //abuse of var-name, but saves memory
+                    grid_[i][j].swap_lvl[qmc::swap_bra1] = swap_zone;
+                    grid_[i][j].swap_lvl[qmc::swap_bra2] = !swap_zone;
+                    grid_[i][j].swap_lvl[qmc::swap_ket1] = !swap_zone;
+                    grid_[i][j].swap_lvl[qmc::swap_ket2] = swap_zone;
                 }
             }
             n_loops_[qmc::swap_bra1] = n_loops_[bra1] + n_loops_[bra2] - loops_in_zone.size();
@@ -652,7 +727,7 @@ namespace perimeter {
             loop_type loop_nr = H_ * L_;
             std::for_each(begin(), end(),
                 [&](site_type & s) {
-                    if(s.spin[qmc::swap_bra1] == true)
+                    if(s.swap_lvl[qmc::swap_bra1] == true)
                         if(s.check[qmc::swap_bra1] == 0) {
                             follow_loop_swap(&s, loop_nr, qmc::swap_bra1);
                             ++loop_nr;
@@ -662,7 +737,7 @@ namespace perimeter {
             );
             std::for_each(begin(), end(),
                 [&](site_type & s) {
-                    if(s.spin[qmc::swap_bra1] == true)
+                    if(s.swap_lvl[qmc::swap_bra1] == true)
                         if(s.check[qmc::swap_bra2] == 0) {
                             follow_loop_swap(&s, loop_nr, qmc::swap_bra2);
                             ++loop_nr;
@@ -682,7 +757,7 @@ namespace perimeter {
                 next->check[level] = true;
                 next->loop[level] = loop_var;
                 peek = next_in_loop(next, level);
-                if(peek->spin[level] != next->spin[level]) {
+                if(peek->swap_lvl[level] != next->swap_lvl[level]) {
                     if(alternator_[level] == qmc::swap_ket1) {
                         level = qmc::swap_bra2;
                         alternator_[level] = qmc::swap_ket2;

@@ -21,12 +21,12 @@ int main(int argc, char* argv[])
     addon::parameter.set("p", 0.5);
     addon::parameter.read(argc, argv);
     
-    swap_region_class sw(test + "../examples/swap/swap_4x4.txt");
+    swap_region_class sw(test + "../examples/swap/swap_4x4_single.txt");
     sim_class sim(addon::parameter.get());
     
     uint l0 = sim.grid().n_all_loops();
     //~ std::cout << "l0: " << l0 << std::endl;
-    assert(l0 == 16);
+    assert(l0 == (8 * (qmc::n_bra - 2)));
     
     sim.grid().swap_region(sw);
     uint l1 = sim.grid().n_swap_loops();
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
     //~ std::cout << "l2 after invertswap: " << l2 << std::endl;
     assert(l2 == 4);
     
-    swap_region_class sw2(test + "../examples/swap/swap_8x8.txt");
+    swap_region_class sw2(test + "../examples/swap/swap_8x8_single.txt");
     //~ sw2.set_grow({qmc::right});
     //~ sw2.set_grow({qmc::up, qmc::hori});
     sw2.set_grow({qmc::right, qmc::left, qmc::up, qmc::down, qmc::diag_down, qmc::diag_up, qmc::hori});

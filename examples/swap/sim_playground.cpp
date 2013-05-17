@@ -19,32 +19,38 @@ int main(int argc, char* argv[])
     addon::parameter.set("f", 1);
     addon::parameter.set("g", 0);
     
-    //~ addon::parameter.set("H", 4);
-    //~ addon::parameter.set("L", 4);
-    //~ swap_region_class sw(test + "../examples/swap/swap_4x4.txt");
+    addon::parameter.set("H", 4);
+    addon::parameter.set("L", 4);
+    swap_region_class sw(test + "../examples/swap/swap_4x4.txt");
     
-    addon::parameter.set("H", 8);
-    addon::parameter.set("L", 8);
-    swap_region_class sw(test + "../examples/swap/swap_8x8.txt");
+    //~ addon::parameter.set("H", 8);
+    //~ addon::parameter.set("L", 8);
+    //~ swap_region_class sw(test + "../examples/swap/swap_8x8.txt");
     
+    sw.print(3);
+    sw.write(test + "../examples/swap/swap_8x8_out.txt");
     addon::parameter.read(argc, argv);
     sim_class sim(addon::parameter.get());
     
     uint l0 = sim.grid().n_all_loops();
     std::cout << "l0: " << l0 << std::endl;
-    sim.grid().swap_region(sw);
+    sim.grid().set_swap_lvl(sw);
+    sim.grid().print_all({qmc::bra, qmc::bra2, qmc::bra3}, uint(addon::parameter["-f"]));
+    //~ sim.grid().print({qmc::bra, qmc::bra2, qmc::bra3});
     
-    uint l1 = sim.grid().n_swap_loops();
-    sim.grid().print_all({qmc::swap_bra1});
-    std::cout << "l1 after swap: " << l1 << std::endl;
-    
-    sw.set_grow({qmc::up, qmc::down, qmc::right, qmc::left});
-    sw.grow(addon::parameter["-g"]);
-    
-    sim.grid().swap_region(sw);
-    uint l2 = sim.grid().n_swap_loops();
-    sim.grid().print_all({qmc::bra, qmc::swap_bra1, qmc::swap_bra2}, uint(addon::parameter["-f"]));
-    std::cout << "l2 after invertswap: " << l2 << std::endl;
+    //~ sim.grid().swap_region(sw);
+    //~ 
+    //~ uint l1 = sim.grid().n_swap_loops();
+    //~ sim.grid().print_all({qmc::swap_bra1});
+    //~ std::cout << "l1 after swap: " << l1 << std::endl;
+    //~ 
+    //~ sw.set_grow({qmc::up, qmc::down, qmc::right, qmc::left});
+    //~ sw.grow(addon::parameter["-g"]);
+    //~ 
+    //~ sim.grid().swap_region(sw);
+    //~ uint l2 = sim.grid().n_swap_loops();
+    //~ sim.grid().print_all({qmc::bra, qmc::swap_bra1, qmc::swap_bra2}, uint(addon::parameter["-f"]));
+    //~ std::cout << "l2 after invertswap: " << l2 << std::endl;
     
     return 0;
 }

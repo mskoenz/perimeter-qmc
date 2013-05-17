@@ -33,12 +33,12 @@ namespace perimeter {
               start_state = 0
             , bra = 0
             , bra2
-            //~ , bra3
+            , bra3
             , swap_bra1
             , swap_bra2
             , swap_ket2
             , swap_ket1
-            //~ , ket3
+            , ket3
             , ket2
             , ket
             , n_states
@@ -89,6 +89,7 @@ namespace perimeter {
     typedef uint bond_type; ///< based on bond_enum, but since the enum is not usable as an index, its an uint
     typedef std::bitset<qmc::n_states> check_type; ///< used for the check variable. a bool would also work, but an uint8_t needs the same space and provides more option
     typedef uint state_type; ///< names the type of the state. again, casting from and to enum all the time would be cumbersome
+    typedef uint swap_lvl_type;
 
     struct site_struct {
         
@@ -123,6 +124,7 @@ namespace perimeter {
         ///  \brief prints the spin of state s12 (12 bc it can be bra or ket) to os
         void print(state_type const & s12 = qmc::start_state, std::ostream & os = std::cout) const {
             os << spin[s12];
+            //~ os << swap_lvl[s12];
         }
         ///  \brief the fancy print-function used by the grid_class
         std::vector<std::string> const string_print(uint const & L, state_type const & s1, uint const & what) const {
@@ -192,7 +194,7 @@ namespace perimeter {
         bond_type bond[qmc::n_states]; ///< bond-direction for each state
         site_struct * neighbor[qmc::n_bonds]; ///< pointes structure to determine neighbor relations. same for all states
         check_type check; ///< shared by all states
-        swap_type swap[]
+        swap_lvl_type swap_lvl[qmc::n_states];
     private:
         ///  \brief plots the bonds in differente colors, depending how the config is
         std::string print_bond(qmc::bond_enum b, std::string go, std::string no, state_type const & s1, uint const & what) const {
