@@ -236,9 +236,9 @@ namespace perimeter {
             
             if(what == 0) { //print bra and ket
                 if(spin[s1] != spin[s2])
-                    res << REDB << "X" << NONE;
+                    res << YELLOWB << "X" << NONE;
                 else
-                    res << BLUEB << "O" << NONE;
+                    res << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE;
             }
             else if(what == 1) { //print bra only
                 res << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE;

@@ -1,4 +1,5 @@
 FOREACH (name   sim_playground
+                permut_swap
     )
     add_executable(${name} ${name}.cpp)
     add_dependencies(${name} build_nr) #increases the build-number

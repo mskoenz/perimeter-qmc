@@ -109,7 +109,6 @@ namespace addon
                 throw std::runtime_error("key not found in bash_parameter");
             return 0;
         }
-        
     private:
         std::map<std::string, double*> dict;    ///< the dictionary that stores the references with the names as keys
         std::vector<double> inside; ///< for inits that don't provide an external variable

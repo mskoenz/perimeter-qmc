@@ -120,6 +120,23 @@ namespace perimeter {
             } while(next != start);
         }
         
+          /*///  \brief performs the two_bond update for the bonds
+        ///  
+        ///  @param target is the input site
+        ///  @param old_partner is the old partner of the target
+        ///  @param b is the direction of the bond of target and old_partner after the update
+        ///  @param state names the choosen state in which the flip should occure*/
+        void two_bond_flip(site_type * const target, site_type * const old_partner, bond_type const & b, state_type const & state) {
+            //target node shows in the dircetion of the neighbor with the same orientation
+            target->bond[state] = b;
+            //old partner does the same
+            old_partner->bond[state] = b;
+            //the new partner of the target bond shows in the targets direction
+            target->neighbor[b]->bond[state] = qmc::invert_bond - b;
+            //old partner of the new partner does the same
+            old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
+        }
+        
         /*///  \brief performs a two bond update with a split
         ///  
         ///  @param target is the input site
@@ -321,6 +338,27 @@ namespace perimeter {
         }
         
         //=================== loop analysis ===================
+        void init_loops(state_type const & bra) {
+            available_[bra].clear();
+            n_loops_[bra] = 0;
+            std::for_each(begin(), end(), 
+                [&](site_type & s) {
+                    if(s.check[bra] == false)
+                    {
+                        //~ follow_loop(&s, n_loops_[bra], bra);
+                        follow_loop_tpl(&s, bra, 
+                            [&](site_type * next){
+                                next->check[bra] = true;
+                                next->loop[bra] = n_loops_[bra];
+                            }
+                        );
+                        ++n_loops_[bra];
+                    }
+                }
+            );
+            clear_check();
+        }
+        
         /*///  \brief returns a map with infos about the loopsize-distribution
         ///  
         ///  @param bra is the index for the transition graph
@@ -343,7 +381,16 @@ namespace perimeter {
             return res;
         }
         
-        loop_type n_loops(state_type const &  bra) const {
+        loop_type n_loops(std::vector<state_type> const & vec) const {
+            loop_type res(0);
+            std::for_each(vec.begin(), vec.end(), 
+                [&](state_type const & bra) {
+                    res += n_loops(bra);
+                }
+            );
+            return res;
+        }
+        loop_type n_loops(state_type const & bra) const {
             loop_type res(0);
             auto l = loop_analysis(bra);
             std::for_each(l.begin(), l.end(),
@@ -607,26 +654,8 @@ namespace perimeter {
         ///  
         ///  is also only used once by the constructor at the start. initializes the loop labels*/
         void init_loops() {
-            for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
-                available_[bra].clear();
-                n_loops_[bra] = 0;
-                std::for_each(begin(), end(), 
-                    [&](site_type & s) {
-                        if(s.check[bra] == false)
-                        {
-                            //~ follow_loop(&s, n_loops_[bra], bra);
-                            follow_loop_tpl(&s, bra, 
-                                [&](site_type * next){
-                                    next->check[bra] = true;
-                                    next->loop[bra] = n_loops_[bra];
-                                }
-                            );
-                            ++n_loops_[bra];
-                        }
-                    }
-                );
-                clear_check();
-            }
+            for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra)
+                init_loops(bra);
         }
         
         uint find_lowest(uint const & nr) const {
@@ -668,24 +697,6 @@ namespace perimeter {
         site_type * next_in_loop(site_type * const in, state_type const & bra) {
             alternator_[bra] = qmc::invert_state - alternator_[bra];
             return in->partner(alternator_[bra]);
-        }
-        
-        /*///  \brief performs the two_bond update for the bonds
-        ///  
-        ///  @param target is the input site
-        ///  @param old_partner is the old partner of the target
-        ///  @param b is the direction of the bond of target and old_partner after the update
-        ///  @param state names the choosen state in which the flip should occure*/
-        
-        void two_bond_flip(site_type * const target, site_type * const old_partner, bond_type const & b, state_type const & state) {
-            //target node shows in the dircetion of the neighbor with the same orientation
-            target->bond[state] = b;
-            //old partner does the same
-            old_partner->bond[state] = b;
-            //the new partner of the target bond shows in the targets direction
-            target->neighbor[b]->bond[state] = qmc::invert_bond - b;
-            //old partner of the new partner does the same
-            old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
         }
         
         //------------------- swap -------------------
