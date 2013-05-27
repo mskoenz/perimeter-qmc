@@ -32,7 +32,7 @@ namespace perimeter
                                                         , rngS_() 
                                                         , rngH_(H_) 
                                                         , rngL_(L_) 
-                                                        , sw_("../../../examples/swap/swap_8x8_single.txt")
+                                                        , sw_("../examples/swap/swap_22x22_single.txt")
                                                         , p(param_["-p"]){
             std::cout << "Parameter" << std::endl;
             for(auto in = param_.begin(); in != param_.end(); ++in)
@@ -111,13 +111,14 @@ namespace perimeter
         void measure() {
             grid().swap_region(sw_);
             data["swap_loops"] << grid_.n_swap_loops();
+            data["swap_overlap"] << pow(2.0, int(grid_.n_swap_loops()) - int(grid_.n_loops({qmc::bra, qmc::bra2})));
             data["loops"] << grid_.n_loops({qmc::bra, qmc::bra2});
-            data["overlap"] << pow(2.0, -int(grid_.n_loops({qmc::bra, qmc::bra2})));
+            data["overlap"] << pow(2.0, int(grid_.n_loops({qmc::bra, qmc::bra2})) - 2*H_*L_* .5 );
         }
         
         void run() {
-            addon::timer_class<addon::normal> timer(param_["-term"] + param_["-sim"]);
-            timer.set_names("S_seed", "H_seed", "L_seed");
+            addon::timer_class<addon::data> timer(param_["-term"] + param_["-sim"]);
+            timer.set_names("S_seed", "H_seed", "L_seed", "grow", "S2");
             timer.set_comment("test");
             
             for(uint i = 0; i < param_["-term"]; ++i) {
@@ -131,7 +132,8 @@ namespace perimeter
                 measure();
                 timer.progress(param_["-term"] + i);
             }
-            timer.print(rngS_.seed(), rngH_.seed(), rngL_.seed());
+            timer.print(rngS_.seed(), rngH_.seed(), rngL_.seed(), param_["-g"], -std::log(data["swap_overlap"].mean()));
+            timer.write(rngS_.seed(), rngH_.seed(), rngL_.seed(), param_["-g"], -std::log(data["swap_overlap"].mean()));
         }
         
         void present_data() {
@@ -140,6 +142,7 @@ namespace perimeter
                     std::cout << p.first << ": " << p.second << std::endl;
                 }
             );
+            std::cout << "S2 = " << -std::log(data["swap_overlap"].mean()) << std::endl;
         }
         
         grid_class & grid() {

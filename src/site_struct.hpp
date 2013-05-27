@@ -194,7 +194,8 @@ namespace perimeter {
         bond_type bond[qmc::n_states]; ///< bond-direction for each state
         site_struct * neighbor[qmc::n_bonds]; ///< pointes structure to determine neighbor relations. same for all states
         check_type check; ///< shared by all states
-        swap_lvl_type swap_lvl[qmc::n_states];
+        swap_lvl_type swap_lvl[qmc::n_bonds];
+         
     private:
         ///  \brief plots the bonds in differente colors, depending how the config is
         std::string print_bond(qmc::bond_enum b, std::string go, std::string no, state_type const & s1, uint const & what) const {

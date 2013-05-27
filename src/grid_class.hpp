@@ -52,8 +52,7 @@ namespace perimeter {
         inline grid_class(uint const H, uint const L, std::vector<uint> const & init = std::vector<uint>(qmc::n_bra, 0)): 
                 H_(H)
               , L_(L)
-              , grid_(boost::extents[H_][L_]) 
-        {
+              , grid_(boost::extents[H_][L_]) {
             assert(H_%2 == 0);
             assert(L_%2 == 0);
             assert(qmc::n_states%2 == 0);
