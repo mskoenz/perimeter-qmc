@@ -31,18 +31,8 @@ namespace perimeter {
         ///  n_bra specifies how many transition graphes there are
         enum state_enum {
               start_state = 0
-            , bra = 0
-            , bra2
-            , bra3
-            , swap_bra1
-            , swap_bra2
-            , swap_ket2
-            , swap_ket1
-            , ket3
-            , ket2
-            , ket
-            , n_states
-            , n_bra = n_states/2
+            , n_bra = 2
+            , n_states = n_bra * 2
             , invert_state = n_states - 1
         };
         ///  \brief contains the information about the bonds
@@ -60,9 +50,9 @@ namespace perimeter {
             , left
             , up
             , n_bonds
-            , hori
             , diag_down
             , diag_up
+            , hori
             , none
             , invert_bond = n_bonds - 1 + start_bond
             , tri = 6 + start_bond
@@ -81,6 +71,14 @@ namespace perimeter {
             , invert_spin = n_spins - 1
         };
         
+        enum shift_enum {
+              start_shift = 0
+            , ket_preswap = 0
+            , ket_swap
+            , n_shifts
+            , no_shift = n_shifts + 1
+        };
+        
     }
     ///  \brief the type of the sites in the grid
 
@@ -89,7 +87,7 @@ namespace perimeter {
     typedef uint bond_type; ///< based on bond_enum, but since the enum is not usable as an index, its an uint
     typedef std::bitset<qmc::n_states> check_type; ///< used for the check variable. a bool would also work, but an uint8_t needs the same space and provides more option
     typedef uint state_type; ///< names the type of the state. again, casting from and to enum all the time would be cumbersome
-    typedef uint swap_lvl_type;
+    typedef uint shift_type;
 
     struct site_struct {
         
@@ -103,28 +101,48 @@ namespace perimeter {
                 bond[qmc::invert_state - bra] = qmc::none;
             }
         }
-        ///  \brief spin constructor
-        ///  
-        ///  does exactly the as the default, just lets you set the spin
-        site_struct(spin_type const & spin_in): check(0) {
-            for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
-                loop[bra] = 0;
-                spin[bra] = spin_in;
-                spin[qmc::invert_state - bra] = spin_in;
-                bond[bra] = qmc::none;
-                bond[qmc::invert_state - bra] = qmc::none;
-            }
-        }
         ///  \brief returns the neightbor of state of (*this)
         ///  
         ///  @param state names the state in which one wants to know the entanglement-parter
         site_struct * partner(bond_type const state) {
             return neighbor[bond[state]];
         }
+        site_struct * loop_partner(bond_type & state, bond_type & bra, shift_type const & shift_mode) {
+            if(shift_mode == qmc::no_shift)
+                return neighbor[bond[state]];
+            
+            if(state != bra) {//it's a ket
+                state_type new_ket = state - shift_region[shift_mode];
+                //~ state_type new_ket = state;
+                
+                if(new_ket < qmc::n_bra) //lazy boundary for now
+                    new_ket += qmc::n_bra;
+                
+                
+                site_struct * partner = neighbor[bond[new_ket]];
+                
+                if(partner->shift_region[shift_mode] != shift_region[shift_mode]) {
+                    bra += qmc::n_bra - (partner->shift_region[shift_mode] - shift_region[shift_mode]);
+                    
+                    if(bra >= qmc::n_bra) //lazy boundary for now
+                        bra %= qmc::n_bra;
+                    
+                    //~ std::cout << REDB <<  "ket: jump to " << bra << " loop: " << loop[qmc::invert_state - state] << NONE;
+                    state = qmc::invert_state - bra;
+                }
+                else {
+                    //~ std::cout << GREENB <<  "ket: no jump " << bra << " loop: " << loop[qmc::invert_state - state] << NONE;
+                }
+                return partner;
+            }
+            else {
+                //~ std::cout << "  bra: " << bra << " loop: " << loop[state] << " " << std::endl;
+                return neighbor[bond[state]];
+            }
+        }
         ///  \brief prints the spin of state s12 (12 bc it can be bra or ket) to os
         void print(state_type const & s12 = qmc::start_state, std::ostream & os = std::cout) const {
             os << spin[s12];
-            //~ os << swap_lvl[s12];
         }
         ///  \brief the fancy print-function used by the grid_class
         std::vector<std::string> const string_print(uint const & L, state_type const & s1, uint const & what) const {
@@ -194,23 +212,36 @@ namespace perimeter {
         bond_type bond[qmc::n_states]; ///< bond-direction for each state
         site_struct * neighbor[qmc::n_bonds]; ///< pointes structure to determine neighbor relations. same for all states
         check_type check; ///< shared by all states
-        swap_lvl_type swap_lvl[qmc::n_bonds];
-         
+        shift_type shift_region[qmc::n_shifts];
+        static shift_type shift_mode_print;
     private:
         ///  \brief plots the bonds in differente colors, depending how the config is
         std::string print_bond(qmc::bond_enum b, std::string go, std::string no, state_type const & s1, uint const & what) const {
             std::stringstream res;
             state_type s2 = qmc::invert_state - s1;
             
+            std::string ket_color = GREEN;
+            std::string trans_color = WHITE;
+            if(shift_mode_print != qmc::no_shift) {
+                if(shift_region[shift_mode_print] != 0) {
+                    ket_color = YELLOWB;
+                    trans_color = WHITEB;
+                    s2 -= shift_region[shift_mode_print];
+                    if(s2 < qmc::n_bra) //lazy boundary for now
+                        s2 += qmc::n_bra;
+                }
+            }
+            
+            
             if(what == 0) { //print bra and ket
                 if(bond[s1] == b and bond[s2] == b)
-                    res << WHITE << go << NONE;
+                    res << trans_color << go << NONE;
                 else
                     if(bond[s1] == b)
                         res << MAGENTA << go << NONE;
                     else
                         if(bond[s2] == b)
-                            res << GREEN << go << NONE;
+                            res << ket_color << go << NONE;
                         else
                             res << no;
             }
@@ -222,7 +253,7 @@ namespace perimeter {
             }
             else if(what == 2) { //print ket only
                 if(bond[s2] == b)
-                    res << GREEN << go << NONE;
+                    res << ket_color << go << NONE;
                 else
                     res << no;
             }
@@ -236,10 +267,14 @@ namespace perimeter {
             state_type s2 = qmc::invert_state - s1;
             
             if(what == 0) { //print bra and ket
-                if(spin[s1] != spin[s2])
-                    res << YELLOWB << "X" << NONE;
+                if(shift_mode_print != qmc::no_shift and shift_region[shift_mode_print] != 0)
+                    res << YELLOWB << spin[s1] << NONE;
                 else
-                    res << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE;
+                    res << BLUEB << spin[s1] << NONE;
+                //~ if(spin[s1] != spin[s2])
+                    //~ res << YELLOWB << "X" << NONE;
+                //~ else
+                    //~ res << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE;
             }
             else if(what == 1) { //print bra only
                 res << (spin[s1] == 0 ? BLUEB : REDB) << spin[s1] << NONE;
@@ -251,6 +286,8 @@ namespace perimeter {
             return res.str();
         }
     };
+    
+    shift_type site_struct::shift_mode_print = qmc::no_shift;
     
     std::ostream & operator<<(std::ostream & os, site_struct const & site) {
         site.print(qmc::start_state, os);

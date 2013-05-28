@@ -6,7 +6,7 @@
 #define __SIM_CLASS_HEADER
 
 #include <grid_class.hpp>
-#include <swap_region_class.hpp>
+#include <shift_region_class.hpp>
 
 #include <random2_msk.hpp>
 #include <timer2_msk.hpp>
@@ -25,26 +25,23 @@ namespace perimeter
         typedef typename grid_class::index_type index_type;
         typedef typename grid_class::site_type site_type;
     public:
-        sim_class(std::map<std::string, double> param):   H_(param["-H"])
+        sim_class(std::map<std::string, double> param, std::string shift_file):   H_(param["-H"])
                                                         , L_(param["-L"])
                                                         , param_(param)
                                                         , grid_(H_, L_, {uint(param["-init0"]), uint(param["-init1"]), uint(param["-init2"]), uint(param["-init3"]), uint(param["-init4"])}) 
                                                         , rngS_() 
                                                         , rngH_(H_) 
                                                         , rngL_(L_) 
-                                                        , sw_("../examples/swap/swap_22x22_single.txt")
                                                         , p(param_["-p"]){
             std::cout << "Parameter" << std::endl;
             for(auto in = param_.begin(); in != param_.end(); ++in)
                 std::cout << in->first << " = " << in->second << std::endl;
-                
-            data["swap_loops"] = accumulator_double();
-            data["loops"] = accumulator_double();
-            data["overlap"] = accumulator_double();
             
-            sw_.set_grow({qmc::right});
-            sw_.grow(param_["-g"]);
-            sw_.print(2);
+            shift_region_class sr_(shift_file);
+            sr_.set_grow({qmc::right});
+            sr_.grow(param_["-g"]);
+            sr_.print(2);
+            grid_.set_shift_region(sr_);
         }
         
         bool two_bond_update(index_type i, index_type j, state_type state) {
@@ -59,20 +56,14 @@ namespace perimeter
                 
                 bond_type & dir = target.bond[state];
                 grid_.two_bond_flip(&target, target.neighbor[dir], b, state);
-                //~ if(target.loop[bra] == target.neighbor[b]->loop[bra]) {
-                    //~ grid_.two_bond_split(&target, target.neighbor[dir], b, state, bra);
-                //~ }
-                //~ else {
-                    //~ if(rngS_() > p)
-                        //~ grid_.two_bond_join(&target, target.neighbor[dir], b, state, bra);
-                //~ }
                 return true;
             }
             return false;
         }
         
-        void spin_update(state_type const & bra) {
-            grid_.init_loops(bra);
+        void spin_update() {
+            grid_.init_loops();
+            state_type bra = 0;
             std::for_each(grid_.begin(), grid_.end(), 
                 [&](site_type & s) {
                     if(s.check[bra] == false)
@@ -99,21 +90,19 @@ namespace perimeter
             grid_.clear_check();
         }
         
-        void update(state_type const & bra) {
-            state_type state = bra;
-            for(uint i = 0; i < H_ * L_; ++i) {
-                two_bond_update(rngH_(), rngL_(), state);
-                state = qmc::invert_state - state;
-            }
-            spin_update(bra);
+        void update() {
+            for(state_type state = qmc::start_state; state < qmc::n_states; ++state)
+                for(uint i = 0; i < H_ * L_; ++i)
+                    two_bond_update(rngH_(), rngL_(), state);
+            
+            //~ spin_update();
         }
         
         void measure() {
-            grid().swap_region(sw_);
-            data["swap_loops"] << grid_.n_swap_loops();
-            data["swap_overlap"] << pow(2.0, int(grid_.n_swap_loops()) - int(grid_.n_loops({qmc::bra, qmc::bra2})));
-            data["loops"] << grid_.n_loops({qmc::bra, qmc::bra2});
-            data["overlap"] << pow(2.0, int(grid_.n_loops({qmc::bra, qmc::bra2})) - 2*H_*L_* .5 );
+            //~ data["swap_loops"] << grid_.n_swap_loops();
+            //~ data["swap_overlap"] << pow(2.0, int(grid_.n_swap_loops()) - int(grid_.n_loops({qmc::bra, qmc::bra2})));
+            data["loops"] << grid_.n_loops();
+            //~ data["overlap"] << pow(2.0, int(grid_.n_loops()) - 2*H_*L_* .5 );
         }
         
         void run() {
@@ -122,13 +111,11 @@ namespace perimeter
             timer.set_comment("test");
             
             for(uint i = 0; i < param_["-term"]; ++i) {
-                update(qmc::bra);
-                update(qmc::bra2);
+                update();
                 timer.progress(i);
             }
             for(uint i = 0; i < param_["-sim"]; ++i) {
-                update(qmc::bra);
-                update(qmc::bra2);
+                update();
                 measure();
                 timer.progress(param_["-term"] + i);
             }
@@ -157,7 +144,6 @@ namespace perimeter
         addon::random_class<int, addon::mersenne> rngH_;
         addon::random_class<int, addon::mersenne> rngL_;
         std::map<std::string, accumulator_double> data;
-        swap_region_class sw_;
         double const p;
     };
 }
