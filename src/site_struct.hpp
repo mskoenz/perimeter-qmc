@@ -108,12 +108,13 @@ namespace perimeter {
             return neighbor[bond[state]];
         }
         site_struct * loop_partner(bond_type & state, bond_type & bra, shift_type const & shift_mode) {
-            if(shift_mode == qmc::no_shift)
+            if(shift_mode == qmc::no_shift) {
+                //~ std::cout << "state " << state << "/" << "bond[state] = " << bond[state] << "  n = " << neighbor[bond[state]] << "  states: " << qmc::n_states << std::endl;
                 return neighbor[bond[state]];
+            }
             
             if(state != bra) {//it's a ket
                 state_type new_ket = state - shift_region[shift_mode];
-                //~ state_type new_ket = state;
                 
                 if(new_ket < qmc::n_bra) //lazy boundary for now
                     new_ket += qmc::n_bra;

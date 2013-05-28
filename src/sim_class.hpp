@@ -28,11 +28,11 @@ namespace perimeter
         sim_class(std::map<std::string, double> param, std::string shift_file):   H_(param["-H"])
                                                         , L_(param["-L"])
                                                         , param_(param)
-                                                        , grid_(H_, L_, {uint(param["-init0"]), uint(param["-init1"]), uint(param["-init2"]), uint(param["-init3"]), uint(param["-init4"])}) 
+                                                        , grid_(H_, L_, {uint(param["-init0"]), uint(param["-init1"]), uint(param["-init2"]), uint(param["-init3"]), uint(param["-init4"])})
                                                         , rngS_() 
                                                         , rngH_(H_) 
                                                         , rngL_(L_) 
-                                                        , p(param_["-p"]){
+                                                        {
             std::cout << "Parameter" << std::endl;
             for(auto in = param_.begin(); in != param_.end(); ++in)
                 std::cout << in->first << " = " << in->second << std::endl;
@@ -63,30 +63,31 @@ namespace perimeter
         
         void spin_update() {
             grid_.init_loops();
-            state_type bra = 0;
-            std::for_each(grid_.begin(), grid_.end(), 
-                [&](site_type & s) {
-                    if(s.check[bra] == false)
-                    {
-                        if(rngS_() > .5) {
-                            grid_.follow_loop_tpl(&s, bra, 
-                                [&](site_type * next) {
-                                    next->check[bra] = true;
-                                }
-                            );
-                        }
-                        else {
-                            grid_.follow_loop_tpl(&s, bra, 
-                                [&](site_type * next) {
-                                    next->check[bra] = true;
-                                    next->spin[bra] = qmc::invert_spin - next->spin[bra];
-                                    next->spin[qmc::invert_state - bra] = qmc::invert_spin - next->spin[qmc::invert_state - bra];
-                                }
-                            );
+            for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
+                std::for_each(grid_.begin(), grid_.end(), 
+                    [&](site_type & s) {
+                        if(s.check[bra] == false)
+                        {
+                            if(rngS_() > .5) {
+                                grid_.follow_loop_tpl(&s, bra, 
+                                    [&](site_type * next) {
+                                        next->check[bra] = true;
+                                    }
+                                );
+                            }
+                            else {
+                                grid_.follow_loop_tpl(&s, bra, 
+                                    [&](site_type * next) {
+                                        next->check[bra] = true;
+                                        next->spin[bra] = qmc::invert_spin - next->spin[bra];
+                                        next->spin[qmc::invert_state - bra] = qmc::invert_spin - next->spin[qmc::invert_state - bra];
+                                    }
+                                );
+                            }
                         }
                     }
-                }
-            );
+                );
+            }
             grid_.clear_check();
         }
         
@@ -95,14 +96,18 @@ namespace perimeter
                 for(uint i = 0; i < H_ * L_; ++i)
                     two_bond_update(rngH_(), rngL_(), state);
             
-            //~ spin_update();
+            spin_update();
         }
         
         void measure() {
-            //~ data["swap_loops"] << grid_.n_swap_loops();
-            //~ data["swap_overlap"] << pow(2.0, int(grid_.n_swap_loops()) - int(grid_.n_loops({qmc::bra, qmc::bra2})));
-            data["loops"] << grid_.n_loops();
-            //~ data["overlap"] << pow(2.0, int(grid_.n_loops()) - 2*H_*L_* .5 );
+            double loops = grid_.n_loops();
+            data["loops"] << loops;
+            data["overlap"] << pow(2.0, loops - 2*H_*L_* .5 );
+            grid_.set_shift_mode(qmc::ket_preswap);
+            grid_.init_loops();
+            data["swap_loops"] << grid_.n_loops();
+            data["swap_overlap"] << pow(2.0, int(grid_.n_loops()) - loops);
+            grid_.set_shift_mode(qmc::no_shift);
         }
         
         void run() {
@@ -144,7 +149,6 @@ namespace perimeter
         addon::random_class<int, addon::mersenne> rngH_;
         addon::random_class<int, addon::mersenne> rngL_;
         std::map<std::string, accumulator_double> data;
-        double const p;
     };
 }
 #endif //__SIM_CLASS_HEADER

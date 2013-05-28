@@ -42,7 +42,7 @@ namespace perimeter {
         ///  normally a uint
         typedef typename vector_type<site_type>::size_type index_type;
         
-        inline grid_class(uint const H, uint const L, std::vector<uint> const & init = std::vector<uint>(qmc::n_bra, 0)): 
+        inline grid_class(uint const H, uint const L, std::vector<uint> init = std::vector<uint>(qmc::n_bra, 0)): 
                 H_(H)
               , L_(L)
               , grid_(boost::extents[H_][L_])
@@ -57,8 +57,13 @@ namespace perimeter {
             assert(qmc::n_states > 0);
             assert(qmc::n_bonds == qmc::tri or qmc::n_bonds == qmc::sqr or qmc::n_bonds == qmc::hex);
             
+            while(init.size() < qmc::n_bra)
+                init.push_back(0);
+                
+            std::cout << ";" << std::endl;
             init_grid(init);
-            init_loops();
+            
+            //~ init_loops();
         }
         void clear_check(){
             std::for_each(begin(), end(), 
@@ -71,6 +76,7 @@ namespace perimeter {
         void follow_loop_tpl(site_type * const start, state_type & bra, F fct) {
             state_type old_bra = bra;
             site_type * next = start;
+            
             do {
                 fct(next);
                 next = next_in_loop(next, bra);
@@ -97,7 +103,6 @@ namespace perimeter {
         
         void set_shift_mode(shift_type const & new_mode) {
             site_type::shift_mode_print = new_mode;
-            
             shift_mode_ = new_mode;
         }
         template<typename T> //T must suport an operator()(uint, uint, uint)
@@ -130,10 +135,8 @@ namespace perimeter {
                                     next->loop[bra] = n_loops_;
                                 }
                             );
-                            //~ DEBUG_VAR(old_bra)
-                            //~ DEBUG_VAR(bra)
                             assert(old_bra == bra);
-                            //~ std::cout << "loop " << n_loops_ << " done" << std::endl;
+                            //~ std::cout << "loop " << n_loops_ << " done " << bra << std::endl;
                             ++n_loops_;
                         }
                     }
@@ -221,12 +224,13 @@ namespace perimeter {
         void init_grid(std::vector<uint> const init) {
             int state = 0;
             
-            for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra) {
+            for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
+                std::cout << "init " << bra;
                 std::for_each(begin(), end(), 
                     [&](site_type & s) {
                         state_type ket = qmc::invert_state - bra;
                         s.spin[bra] = (state + state / L_)%2 == 0 ? qmc::beta : qmc::alpha;
-                        s.spin[qmc::invert_state - bra] = (state + state / L_)%2 == 0 ? qmc::beta : qmc::alpha;
+                        s.spin[ket] = s.spin[bra];
                         
                         if(init[bra] == 0) {
                             if(qmc::n_bonds == qmc::hex) {
@@ -256,6 +260,7 @@ namespace perimeter {
                     ++state;
                     }
                 );
+                std::cout << " done init " << bra << std::endl;
             }
             //initialising the neighbor structure
             for(uint i = 0; i < H_; ++i) {
@@ -293,7 +298,8 @@ namespace perimeter {
             //~ }
             //~ else
             alternator_ = qmc::invert_state - alternator_;
-            return in->loop_partner(alternator_, bra, shift_mode_); //alternator can be changed, as well as bra
+            auto res = in->loop_partner(alternator_, bra, shift_mode_); //alternator can be changed, as well as bra
+            return res;
         }
         
     private:
