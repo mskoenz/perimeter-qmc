@@ -51,6 +51,13 @@ int main(int argc, char* argv[])
     
     sim.grid().print_all({0,1}, addon::parameter["-f"]);
     sim.run();
+    //~ while(1) {
+        //~ char a;
+        //~ std::cin >> a;
+        //~ sim.update();
+        //~ sim.grid().print_all({0,1}, addon::parameter["-f"]);
+    //~ }
+    
     sim.grid().set_shift_mode(qmc::ket_preswap);
     sim.grid().print_all({0,1}, addon::parameter["-f"]);
     sim.present_data();

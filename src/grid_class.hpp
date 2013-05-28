@@ -92,13 +92,17 @@ namespace perimeter {
             //old partner of the new partner does the same
             old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
         }
-        bond_type two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
+        std::vector<bond_type> two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
+        //~ bond_type two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
+            std::vector<bond_type> res;
             for(bond_type b = qmc::start_bond; b < qmc::n_bonds; ++b) {
                 if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[state] != target.neighbor[b]->spin[state]) {
-                    return b;
+                    //~ return b;
+                    res.push_back(b);
                 }
             }
-            return qmc::none;
+            return res;
+            //~ return qmc::none;
         }
         
         void set_shift_mode(shift_type const & new_mode) {
@@ -113,6 +117,15 @@ namespace perimeter {
                         grid_[i][j].shift_region[shift_mode] = region(shift_mode, i, j);
         }
         
+        void copy_to_ket() {
+            for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
+                std::for_each(begin(), end(), 
+                    [&](site_type & s) {
+                        s.spin[qmc::invert_state - bra] = s.spin[bra];
+                    }
+                );
+            }
+        }
         
         site_type & operator()(index_type const i, index_type const j) {
             return grid_[i][j];
@@ -123,7 +136,7 @@ namespace perimeter {
 
         void init_loops() {
             n_loops_ = 0;
-            for(state_type bra = qmc::start_state; bra != qmc::n_bra; ++bra)
+            for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra)
                 std::for_each(begin(), end(), 
                     [&](site_type & s) {
                         if(s.check[bra] == false) {
@@ -308,7 +321,9 @@ namespace perimeter {
         array_type<site_type> grid_; ///< the actual grid
         
         loop_type n_loops_;
+    public:
         state_type alternator_;
+    private:
         shift_type shift_mode_;
     };
 }//end namespace perimeter

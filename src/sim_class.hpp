@@ -51,9 +51,12 @@ namespace perimeter
             if(bra >= qmc::n_bra) //it's a ket
                 bra = qmc::invert_state - state; //now it's a bra
             
-            bond_type const b = grid_.two_bond_update_site(target, state, bra);
-            if(b != qmc::none) {
-                
+            std::vector<bond_type> const res = grid_.two_bond_update_site(target, state, bra);
+            //~ bond_type const b = grid_.two_bond_update_site(target, state, bra);
+            //~ if(b != qmc::none) {
+            if(res.size() != 0) {
+                int index = int(res.size()*rngS_());
+                bond_type b = res[index];
                 bond_type & dir = target.bond[state];
                 grid_.two_bond_flip(&target, target.neighbor[dir], b, state);
                 return true;
@@ -64,6 +67,7 @@ namespace perimeter
         void spin_update() {
             grid_.init_loops();
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
+                grid_.alternator_ = bra;
                 std::for_each(grid_.begin(), grid_.end(), 
                     [&](site_type & s) {
                         if(s.check[bra] == false)
@@ -76,13 +80,15 @@ namespace perimeter
                                 );
                             }
                             else {
+                                //~ std::cout << "follow change loop: " << s.loop[bra] << "   >";
                                 grid_.follow_loop_tpl(&s, bra, 
                                     [&](site_type * next) {
                                         next->check[bra] = true;
+                                        //~ std::cout << ".";
                                         next->spin[bra] = qmc::invert_spin - next->spin[bra];
-                                        next->spin[qmc::invert_state - bra] = qmc::invert_spin - next->spin[qmc::invert_state - bra];
                                     }
                                 );
+                                //~ std::cout << "done" << std::endl;
                             }
                         }
                     }
@@ -92,11 +98,17 @@ namespace perimeter
         }
         
         void update() {
-            for(state_type state = qmc::start_state; state < qmc::n_states; ++state)
-                for(uint i = 0; i < H_ * L_; ++i)
-                    two_bond_update(rngH_(), rngL_(), state);
             
+            
+            for(state_type state = qmc::start_state; state < qmc::n_states; ++state)
+                for(uint i = 0; i < H_ * L_; ++i) {
+                    two_bond_update(rngH_(), rngL_(), state);
+                }
+            
+            //~ grid_.set_shift_mode(qmc::ket_preswap);
             spin_update();
+            grid_.copy_to_ket();
+            //~ grid_.set_shift_mode(qmc::no_shift);
         }
         
         void measure() {
