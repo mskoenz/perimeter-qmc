@@ -60,10 +60,9 @@ namespace perimeter {
             while(init.size() < qmc::n_bra)
                 init.push_back(0);
                 
-            std::cout << ";" << std::endl;
             init_grid(init);
             
-            //~ init_loops();
+            init_loops();
         }
         void clear_check(){
             std::for_each(begin(), end(), 
@@ -92,17 +91,17 @@ namespace perimeter {
             //old partner of the new partner does the same
             old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
         }
-        std::vector<bond_type> two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
-        //~ bond_type two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
-            std::vector<bond_type> res;
+        //~ std::vector<bond_type> two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
+        bond_type two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
+            //~ std::vector<bond_type> res;
             for(bond_type b = qmc::start_bond; b < qmc::n_bonds; ++b) {
                 if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[state] != target.neighbor[b]->spin[state]) {
-                    //~ return b;
-                    res.push_back(b);
+                    return b;
+                    //~ res.push_back(b);
                 }
             }
-            return res;
-            //~ return qmc::none;
+            //~ return res;
+            return qmc::none;
         }
         
         void set_shift_mode(shift_type const & new_mode) {
@@ -118,12 +117,28 @@ namespace perimeter {
         }
         
         void copy_to_ket() {
-            for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
-                std::for_each(begin(), end(), 
-                    [&](site_type & s) {
-                        s.spin[qmc::invert_state - bra] = s.spin[bra];
-                    }
-                );
+            if(shift_mode_ == qmc::no_shift) {
+                for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
+                    std::for_each(begin(), end(), 
+                        [&](site_type & s) {
+                            state_type const ket = qmc::invert_state - bra;
+                            s.spin[ket] = s.spin[bra];
+                        }
+                    );
+                }
+            }
+            else {
+                for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
+                    std::for_each(begin(), end(), 
+                        [&](site_type & s) {
+                            state_type const ket = qmc::invert_state - bra;
+                            state_type effective_bra = bra + (qmc::n_bra - s.shift_region[shift_mode_]);
+                            if(effective_bra >= qmc::n_bra)//lazy boundary for now
+                                effective_bra -= qmc::n_bra;
+                            s.spin[ket] = s.spin[effective_bra];
+                        }
+                    );
+                }
             }
         }
         
@@ -238,7 +253,6 @@ namespace perimeter {
             int state = 0;
             
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
-                std::cout << "init " << bra;
                 std::for_each(begin(), end(), 
                     [&](site_type & s) {
                         state_type ket = qmc::invert_state - bra;
@@ -273,7 +287,6 @@ namespace perimeter {
                     ++state;
                     }
                 );
-                std::cout << " done init " << bra << std::endl;
             }
             //initialising the neighbor structure
             for(uint i = 0; i < H_; ++i) {
@@ -298,21 +311,8 @@ namespace perimeter {
             }
         }
         site_type * next_in_loop(site_type * const in, state_type & bra) {
-            //~ DEBUG_VAR(bra)
-            //~ DEBUG_VAR(alternator_)
-            //~ static state_type bra_now = z;
-            //~ if(z != bra_now) {
-                //~ bra_now = z;
-                //~ if(alternator_ < qmc::n_bra) { //it's a bra
-                    //~ alternator_ = qmc::invert_state - bra_now;
-                //~ }
-                //~ else
-                    //~ alternator_ = bra_now;
-            //~ }
-            //~ else
             alternator_ = qmc::invert_state - alternator_;
-            auto res = in->loop_partner(alternator_, bra, shift_mode_); //alternator can be changed, as well as bra
-            return res;
+            return in->loop_partner(alternator_, bra, shift_mode_); //alternator can be changed, as well as bra
         }
         
     private:

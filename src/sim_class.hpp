@@ -33,14 +33,14 @@ namespace perimeter
                                                         , rngH_(H_) 
                                                         , rngL_(L_) 
                                                         {
-            std::cout << "Parameter" << std::endl;
-            for(auto in = param_.begin(); in != param_.end(); ++in)
-                std::cout << in->first << " = " << in->second << std::endl;
+            //~ std::cout << "Parameter" << std::endl;
+            //~ for(auto in = param_.begin(); in != param_.end(); ++in)
+                //~ std::cout << in->first << " = " << in->second << std::endl;
             
             shift_region_class sr_(shift_file);
             sr_.set_grow({qmc::right});
             sr_.grow(param_["-g"]);
-            sr_.print(2);
+            //~ sr_.print(2);
             grid_.set_shift_region(sr_);
         }
         
@@ -51,12 +51,12 @@ namespace perimeter
             if(bra >= qmc::n_bra) //it's a ket
                 bra = qmc::invert_state - state; //now it's a bra
             
-            std::vector<bond_type> const res = grid_.two_bond_update_site(target, state, bra);
-            //~ bond_type const b = grid_.two_bond_update_site(target, state, bra);
-            //~ if(b != qmc::none) {
-            if(res.size() != 0) {
-                int index = int(res.size()*rngS_());
-                bond_type b = res[index];
+            //~ std::vector<bond_type> const res = grid_.two_bond_update_site(target, state, bra);
+            bond_type const b = grid_.two_bond_update_site(target, state, bra);
+            if(b != qmc::none) {
+            //~ if(res.size() != 0) {
+                //~ int index = int(res.size()*rngS_());
+                //~ bond_type b = res[index];
                 bond_type & dir = target.bond[state];
                 grid_.two_bond_flip(&target, target.neighbor[dir], b, state);
                 return true;
@@ -98,33 +98,38 @@ namespace perimeter
         }
         
         void update() {
-            
+            grid_.copy_to_ket();
+            grid_.set_shift_mode(qmc::no_shift);
             
             for(state_type state = qmc::start_state; state < qmc::n_states; ++state)
                 for(uint i = 0; i < H_ * L_; ++i) {
                     two_bond_update(rngH_(), rngL_(), state);
                 }
             
-            //~ grid_.set_shift_mode(qmc::ket_preswap);
+            grid_.set_shift_mode(qmc::ket_preswap);
+            
             spin_update();
-            grid_.copy_to_ket();
-            //~ grid_.set_shift_mode(qmc::no_shift);
         }
         
         void measure() {
             double loops = grid_.n_loops();
             data["loops"] << loops;
             data["overlap"] << pow(2.0, loops - 2*H_*L_* .5 );
-            grid_.set_shift_mode(qmc::ket_preswap);
+            grid_.set_shift_mode(qmc::ket_swap);
+            //~ grid_.set_shift_mode(qmc::ket_preswap);
             grid_.init_loops();
             data["swap_loops"] << grid_.n_loops();
             data["swap_overlap"] << pow(2.0, int(grid_.n_loops()) - loops);
-            grid_.set_shift_mode(qmc::no_shift);
+            grid_.set_shift_mode(qmc::ket_preswap);
+            //~ grid_.set_shift_mode(qmc::no_shift);
         }
         
         void run() {
-            addon::timer_class<addon::data> timer(param_["-term"] + param_["-sim"]);
-            timer.set_names("S_seed", "H_seed", "L_seed", "grow", "S2");
+            //------------------- init state -------------------
+            grid_.set_shift_mode(qmc::ket_preswap);
+            //------------------- init timer -------------------
+            addon::timer_class<addon::data> timer(param_["-term"] + param_["-sim"], "results.txt");
+            timer.set_names("S_seed", "H", "L", "sim", "term", "grow", "S2");
             timer.set_comment("test");
             
             for(uint i = 0; i < param_["-term"]; ++i) {
@@ -136,8 +141,8 @@ namespace perimeter
                 measure();
                 timer.progress(param_["-term"] + i);
             }
-            timer.print(rngS_.seed(), rngH_.seed(), rngL_.seed(), param_["-g"], -std::log(data["swap_overlap"].mean()));
-            timer.write(rngS_.seed(), rngH_.seed(), rngL_.seed(), param_["-g"], -std::log(data["swap_overlap"].mean()));
+            timer.print(rngS_.seed(), H_, L_, param_["-sim"], param_["-term"], param_["-g"], -std::log(data["swap_overlap"].mean()));
+            timer.write(rngS_.seed(), H_, L_, param_["-sim"], param_["-term"], param_["-g"], -std::log(data["swap_overlap"].mean()));
         }
         
         void present_data() {

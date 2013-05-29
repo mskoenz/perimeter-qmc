@@ -394,7 +394,14 @@ def analyze_argv(arg):
                     pylab.plot(datasplit[parts][xind][begin:end], datasplit[parts][yind][begin:end], color[parts], label = plotlabels[parts])
             pylab.legend(loc = 1)
         else:
-            pylab.plot(data[xind][begin:end], data[yind][begin:end], "r-")
+            imed = data[yind][begin:end]
+            summed = [0]
+            for i in range(len(imed)):
+                summed[i] += float(imed[i])
+                summed.append(summed[i])
+            summed.pop()
+            pylab.plot(data[xind][begin:end], summed, "r-")
+            pylab.plot(data[xind][begin:end], data[yind][begin:end], "b--")
         pylab.show()
     return 0
 

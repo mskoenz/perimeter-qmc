@@ -219,7 +219,7 @@ namespace addon {
                 if(elapsed() - last_print_ > 1)
                 {
                     double e = elapsed();
-                    if(e - last_print_ > 3)
+                    if(e - last_print_ > 3 and mod_ > 2)
                         mod_ >>= 1;
                         
                     last_print_ = e;

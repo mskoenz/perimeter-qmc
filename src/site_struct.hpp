@@ -66,6 +66,10 @@ namespace perimeter {
         enum spin_enum {
               start_spin = 0
             , beta = 0
+            //~ , beta_2
+            //~ , beta_3
+            //~ , alpha_3
+            //~ , alpha_2
             , alpha
             , n_spins
             , invert_spin = n_spins - 1
