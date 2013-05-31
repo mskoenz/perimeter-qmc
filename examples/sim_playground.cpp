@@ -90,7 +90,6 @@ void run_single_sim() {
 }
 int main(int argc, char* argv[])
 {
-    addon::checkpoint.read();
     std::string test = "";
     //~ std::string test = "../../";
     addon::parameter.set("init0", 0);
@@ -115,6 +114,5 @@ int main(int argc, char* argv[])
     //~ run_dual_sim();
     run_single_sim();
     
-    addon::checkpoint.reset();
     return 0;
 }

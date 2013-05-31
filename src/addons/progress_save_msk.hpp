@@ -10,18 +10,21 @@
 #include <map>
 #include <fstream>
 #include <sstream>
+#include <stdio.h>
 #include <utility>
 #include <iostream>
 #include <algorithm>
 
 /*
-checkpoint.read();
+//checkpoint.read(); //happens in ctor
 
 for(uint j = checkpoint("j", j); j < 5; ++j)
     for(uint k = 0; k < 10; ++k)
         checkpoint.write();
 
-checkpoint.reset();
+checkpoint("j", j, 5) to set 5 as "0" value
+
+//checkpoint.reset(); //happens in dtor
 
 */
 
@@ -31,16 +34,32 @@ namespace addon {
         
     public:
         progress_save_class(): name_("checkpoint.txt") {
+            read();
         }
-        void set(std::string const & key) {
-            dict_[key] = 0;
+        ~progress_save_class() {
+            reset();
         }
         store_type operator()(std::string const & key, store_type & i, store_type defa = 0) {
-            ref_dict_[key] = &i;
+            if(ref_dict_.find(key) != ref_dict_.end() and (ref_dict_[key]) != &i)
+                throw std::runtime_error("progress_save_class::operator(): please use different keys for different references");
+            else
+                ref_dict_[key] = &i;
             std::swap(dict_[key], defa);
             return defa;
         }
-        
+        void write() {
+            std::ofstream of_;
+            //~ of_.open(name_.c_str(), std::ios_base::app);
+            of_.open(name_.c_str());
+            std::for_each(ref_dict_.begin(), ref_dict_.end(), 
+                [&](std::pair<std::string const, store_type *> const & p) {
+                    of_ << p.first << " " << *(p.second) << "   ";
+                }
+            );
+            of_ << std::endl;
+            of_.close();
+        }
+    private:
         void read() {
             std::string buffer = "";
             std::string last_line = "";
@@ -69,18 +88,6 @@ namespace addon {
             else
                 std::cout << YELLOW << "no checkpoint file found" << NONE << std::endl;
         }
-        void write() {
-            std::ofstream of_;
-            //~ of_.open(name_.c_str(), std::ios_base::app);
-            of_.open(name_.c_str());
-            std::for_each(ref_dict_.begin(), ref_dict_.end(), 
-                [&](std::pair<std::string const, store_type *> const & p) {
-                    of_ << p.first << " " << *(p.second) << "   ";
-                }
-            );
-            of_ << std::endl;
-            of_.close();
-        }
         void reset() {
             remove(name_.c_str());
         }
@@ -89,6 +96,6 @@ namespace addon {
         std::map<std::string, store_type> dict_;
         std::map<std::string, store_type *> ref_dict_;
     } checkpoint;
-}//end namespace addon
+
 
 #endif //__PROGRESS_SAVE_MSK_HEADER

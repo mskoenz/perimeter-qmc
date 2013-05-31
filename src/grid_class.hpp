@@ -91,18 +91,19 @@ namespace perimeter {
             //old partner of the new partner does the same
             old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
         }
-        //~ std::vector<bond_type> two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
-        bond_type two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
-            //~ std::vector<bond_type> res;
-            for(bond_type b = qmc::start_bond; b < qmc::n_bonds; ++b) {
-                if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[state] != target.neighbor[b]->spin[state]) {
-                    return b;
-                    //~ res.push_back(b);
-                }
-            }
-            //~ return res;
-            return qmc::none;
+        std::vector<bond_type> two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
+            std::vector<bond_type> res;
+            for(bond_type b = qmc::start_bond; b < qmc::n_bonds; ++b)
+                if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[state] != target.neighbor[b]->spin[state])
+                    res.push_back(b);
+            return res;
         }
+        //~ bond_type two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
+            //~ for(bond_type b = qmc::start_bond; b < qmc::n_bonds; ++b)
+                //~ if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[state] != target.neighbor[b]->spin[state])
+                    //~ return b;
+            //~ return qmc::none;
+        //~ }
         
         void set_shift_mode(shift_type const & new_mode) {
             site_type::shift_mode_print = new_mode;

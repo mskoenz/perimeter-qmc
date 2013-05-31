@@ -49,16 +49,20 @@ namespace perimeter
             if(bra >= qmc::n_bra) //it's a ket
                 bra = qmc::invert_state - state; //now it's a bra
             
-            //~ std::vector<bond_type> const res = grid_.two_bond_update_site(target, state, bra);
-            bond_type const b = grid_.two_bond_update_site(target, state, bra);
-            if(b != qmc::none) {
-            //~ if(res.size() != 0) {
-                //~ int index = int(res.size()*rngS_());
-                //~ bond_type b = res[index];
+            std::vector<bond_type> const res = grid_.two_bond_update_site(target, state, bra);
+            if(res.size() != 0) {
+                int index = int(res.size()*rngS_());
+                bond_type b = res[index];
                 bond_type & dir = target.bond[state];
                 grid_.two_bond_flip(&target, target.neighbor[dir], b, state);
                 return true;
             }
+            //~ bond_type const b = grid_.two_bond_update_site(target, state, bra);
+            //~ if(b != qmc::none) {
+                //~ bond_type & dir = target.bond[state];
+                //~ grid_.two_bond_flip(&target, target.neighbor[dir], b, state);
+                //~ return true;
+            //~ }
             return false;
         }
         
