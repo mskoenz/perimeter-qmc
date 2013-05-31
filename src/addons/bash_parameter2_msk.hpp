@@ -18,11 +18,12 @@ addon::parameter.get();
 
 */
 
-#include <iostream>
-#include <cstdlib>
 #include <map>
 #include <vector>
+#include <cstdlib>
 #include <sstream>
+#include <iostream>
+#include <typeinfo>
 #include <stdexcept>
 
 //timer2_msk.hpp documents addon
