@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sim_class.hpp>
 #include <bash_parameter3_msk.hpp>
+#include <progress_save_msk.hpp>
 
 using namespace std;
 using namespace perimeter;
@@ -79,10 +80,9 @@ void run_dual_sim() {
 void run_single_sim() {
     addon::timer_class<addon::normal> timer(addon::parameter["L"]  +1);
     
-    for(uint i = 0; i <= addon::parameter["L"]; ++i) {
+    for(uint i = addon::checkpoint("i", i); i <= addon::parameter["L"]; ++i) {
         timer.progress(i);
-        DEBUG_MSG("pos")
-        DEBUG_VAR(i)
+        addon::checkpoint.write();
         addon::parameter.set("g", i);
         sim_class sim(addon::parameter.get());
         sim.run();
@@ -90,6 +90,7 @@ void run_single_sim() {
 }
 int main(int argc, char* argv[])
 {
+    addon::checkpoint.read();
     std::string test = "";
     //~ std::string test = "../../";
     addon::parameter.set("init0", 0);
@@ -114,5 +115,6 @@ int main(int argc, char* argv[])
     //~ run_dual_sim();
     run_single_sim();
     
+    addon::checkpoint.reset();
     return 0;
 }

@@ -25,11 +25,29 @@ addon::parameter.get();
 #include <iostream>
 #include <typeinfo>
 #include <stdexcept>
+#include <memory>
 
 //timer2_msk.hpp documents addon
 namespace addon
 {
     namespace detail {
+        //------------------- something similar to boost any -------------------
+        class any_base {
+        public:
+            virtual void * get() = 0;
+        };
+        template<typename T>
+        class any_der: public any_base {
+        public:
+            any_der(T const & t): t_(t) {}
+            void * get() {
+                return (void *)(&t_);
+            }
+            
+        private:
+            T t_;
+        };
+        
         //------------------- runtime checks -------------------
         template<typename T>
         bool convertable_to(const std::string& str) {
@@ -42,10 +60,8 @@ namespace addon
 
             return true; 
         }
-
         template< typename T >
-        inline T convert(const std::string& str)
-        {
+        inline T convert(const std::string& str) {
             std::istringstream iss(str);
             T obj;
 
@@ -65,82 +81,86 @@ namespace addon
             static T t;
             enum{value = (sizeof(char) == sizeof(check(t)))};
         };
+        
         //------------------- chameleon type -------------------
         class chameleon_type {
             typedef std::string type_type;
             
+            //------------------- init -------------------
             template<typename T>
             static type_type tn() {
                 return type_type(typeid(T).name());
             }
             template<typename T, typename U, bool convertable>
             struct init {
-                init<T, U, convertable>(T const & t, U & backup, chameleon_type * b) {
-                    backup = U(t);
-                    b->v = &backup;
+                init<T, U, convertable>(T const & t, chameleon_type * b) {
                     b->type = tn<U>();
+                    b->any = std::shared_ptr<any_base>(new any_der<U>(t));
                 }
             };
             template<typename T, typename U>
             struct init<T, U, false> {
-                init<T, U, false>(T const & t, U & backup, chameleon_type * b) {
+                init<T, U, false>(T const & t, chameleon_type * b) {
                 }
             };
             template<typename T>
             void set(T const & t) {
-                v = NULL;
-                init<T, double, is_convertable<T, double>::value>(t, dbu, this);
-                init<T, std::string, is_convertable<T, std::string>::value>(t, sbu, this);
-                if(v == NULL) {
+                any.reset();
+                #define init_op(U) init<T, U, is_convertable<T, U>::value>(t, this);
+                
+                init_op(double)
+                init_op(std::string)
+                
+                #undef init_op
+                if(!any) {
                     std::stringstream ss;
                     ss << "cannot convert type " << typeid(T).name() << " to double or std::string";
                     throw std::runtime_error(ss.str());
                 }
             }
         public:
+            //------------------- ctors -------------------
             template<typename T>
             chameleon_type(T const & t) {
                 set(t);
             }
-            chameleon_type(): v(&dbu), type(tn<double>()), dbu(0) {
+            chameleon_type(): any(new any_der<double>(0)), type(tn<double>()) {
             }
-            chameleon_type(chameleon_type const & c): v(c.v), type(c.type), dbu(c.dbu), sbu(c.sbu) {
+            chameleon_type(chameleon_type const & c): any(c.any), type(c.type) {
             }
             template<typename T>
             void operator=(T const & t) {
                 set(t);
             }
-            operator std::string() const {
-                if(tn<std::string>() != type){
-                    //~ DEBUG_VAR(sbu)
-                    //~ DEBUG_VAR(dbu)
-                    //~ DEBUG_VAR(type)
-                    throw std::runtime_error("wrong conversion to std::string");
-                }
-                return *(std::string const *)(v);
-            }
-            operator double() const {
-                if(tn<double>() != type) {
-                    //~ DEBUG_VAR(sbu)
-                    //~ DEBUG_VAR(dbu)
-                    //~ DEBUG_VAR(type)
-                    throw std::runtime_error("wrong conversion to double");
-                }
-                return *(double const *)(v);
-            }
+            //------------------- cast-ops -------------------
+            #define create_cast_op(T)\
+            operator T() const {\
+                if(tn<T>() != type){\
+                    throw std::runtime_error("wrong conversion to T");\
+                }\
+                return *(T const *)(any->get());\
+            } 
+            
+            create_cast_op(std::string)
+            create_cast_op(double)
+            
+            #undef create_cast_op
+            //------------------- print -------------------
             void print(std::ostream & os = std::cout) const {
-                if(type == tn<double>())
-                    os << dbu;
-                else if(type == tn<std::string>())
-                    os << sbu;
+                #define print_op(T)\
+                if(type == tn<T>())\
+                    os << T(*this);\
                 else
+                
+                print_op(std::string)
+                print_op(double)
                     os<< "chameleon is empty";
+                
+                #undef print_op
             };
         private:
-            void const * v;
+            std::shared_ptr<any_base> any;
             type_type type;
-            double dbu;
-            std::string sbu;
         };
         std::ostream & operator<<(std::ostream & os, chameleon_type const & b) {
             b.print(os);
@@ -184,10 +204,16 @@ namespace addon
             for(int i = 1; i < argc; i += 2) {
                 for(auto it = dict.begin(); it != dict.end(); ++it) {
                     if(("-" + (it->first)) == argv[i]) {
-                        if(detail::convertable_to<double>(argv[i+1]))
-                            it->second = detail::convert<double>(argv[i+1]);
+                        #define convert_op(T)\
+                        if(detail::convertable_to<T>(argv[i+1]))\
+                            it->second = detail::convert<T>(argv[i+1]);\
                         else
-                            it->second = detail::convert<std::string>(argv[i+1]);
+                        
+                        convert_op(double)
+                        convert_op(std::string)
+                        std::cout << "couldn't convert to anything" << std::endl;
+                        
+                        #undef convert_op
                     }
                 }
             }

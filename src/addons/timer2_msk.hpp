@@ -105,6 +105,9 @@ namespace addon {
     ///  it will print the same output in the file that is shown with print(...)
     struct normal {
     };
+    namespace detail {
+        uint active_timer_ = 0;
+    }//end namespace detail
     ///  \brief the improved timer class
     ///  
     ///  it uses boost cpu_timer s.t. it only measures the usertime, not the walltime.
@@ -129,13 +132,18 @@ namespace addon {
                                                             , comment_("")
                                                             , last_print_(0)
                                                             , last_i_(0)
-                                                            , mod_(2)
+                                                            , first_i_(-1)
+                                                            , mod_(1)
                                                             , loop_time_(0)
-                                                            {}
+                                                            , timer_id_(detail::active_timer_)
+                                                            {
+            ++detail::active_timer_;
+        }
         ///  \brief the destructor
         ///  
         ///  it prints the finish, depending if it is in data or normal mode
         ~timer_class() {
+            --detail::active_timer_;
             of_.open(name_.c_str(), std::ios_base::app);
             if(written_ > 1 or (written_ > 0 and typeid(T) == typeid(data)))
             {
@@ -216,30 +224,56 @@ namespace addon {
         void progress(uint64_t const & i) {
             if((i&(mod_-1)) == 0)
             {
-                if(elapsed() - last_print_ > 1)
-                {
+                if(elapsed() - last_print_ > 1) {
                     double e = elapsed();
-                    if(e - last_print_ > 3 and mod_ > 2)
+                    if(e - last_print_ > 3 and mod_ > 1)
                         mod_ >>= 1;
-                        
+                    
+                    if(last_print_ != 0)
+                        std::cout << "\x1B[1A" << "\x1B[2K" << "\x1B[80D"; //move 1 up // kill all("2K") /to left("1K") /to right("K") line // move 80 left
+                    if(first_i_ == -1)
+                        first_i_ = i;
+                    
+                    
+                    //~ double p = double(i - last_i_) / (work_ - last_i_);
+                    double p(double(i) / work_);
+                    double p2(double(i - first_i_) / (work_ - first_i_));
                     last_print_ = e;
                     last_i_ = i;
-                    loop_time_ = (e * 1000000) / i;
-                    double p = double(i) / work_;
+                    loop_time_ = (e * 1000000) / (i - first_i_);
+                    uint time_predict((1-p2)/p2*e);
+                    
+                    for(uint i = 0; i < timer_id_; ++i) {
+                        std::cout << "        ";
+                    }
+                    
                     std::cout   << "progress: " << REDB << std::setprecision(4) << std::setw(3) << 100 * p << "% " << NONE
                                 << "  loop-time: " << std::setw(7) << std::setprecision(4) << loop_time_ << " us"
                                 << "  mod: " << std::setw(10) << mod_ 
-                                << "  left: " << GREENB << std::setfill('0') << std::setw(2) << int((1-p)/p*e)/3600 << ":"
-                                << std::setw(2) << (int((1-p)/p*e)/60)%60 << ":"
-                                << std::setw(2) << int((1-p)/p*e)%60 << std::setfill(' ') << NONE
+                                << "  left: " << GREENB << std::setfill('0') << std::setw(2) << time_predict/3600 << ":"
+                                << std::setw(2) << (time_predict/60)%60 << ":"
+                                << std::setw(2) << time_predict%60 << std::setfill(' ') << NONE
                                 << std::endl;
+                    
                 }
-                else
-                {
-                    mod_ <<= 1;
+                else {
+                    if(first_i_ == -1)
+                        first_i_ = i;
+                    
+                    if(i != first_i_)
+                        mod_ <<= 1;
+                    
                 }
             }
         }
+        ///  \brief burns time
+        ///  
+        ///  @param dt is the amount of time in seconds one wants to "wait"
+        void burn(double const & dt) {
+            double end = elapsed() + dt;
+            while(elapsed() < end) ;
+        }
+        
         ///  \brief free comment
         ///  
         ///  is only used in normal-mode
@@ -427,9 +461,11 @@ namespace addon {
         std::string comment_;
         double last_print_;
         double last_i_;
+        double first_i_; //in case the simulation starts at i = 50 / 100
         uint64_t mod_;
         
         double loop_time_;
+        uint timer_id_;
     };
 }//end namespace addon
 #endif //__TIMER2_MSK_HEADER

@@ -49,12 +49,12 @@ namespace perimeter
             if(bra >= qmc::n_bra) //it's a ket
                 bra = qmc::invert_state - state; //now it's a bra
             
-            std::vector<bond_type> const res = grid_.two_bond_update_site(target, state, bra);
-            //~ bond_type const b = grid_.two_bond_update_site(target, state, bra);
-            //~ if(b != qmc::none) {
-            if(res.size() != 0) {
-                int index = int(res.size()*rngS_());
-                bond_type b = res[index];
+            //~ std::vector<bond_type> const res = grid_.two_bond_update_site(target, state, bra);
+            bond_type const b = grid_.two_bond_update_site(target, state, bra);
+            if(b != qmc::none) {
+            //~ if(res.size() != 0) {
+                //~ int index = int(res.size()*rngS_());
+                //~ bond_type b = res[index];
                 bond_type & dir = target.bond[state];
                 grid_.two_bond_flip(&target, target.neighbor[dir], b, state);
                 return true;
@@ -132,14 +132,14 @@ namespace perimeter
             
             for(uint i = 0; i < param_["term"]; ++i) {
                 update();
-                //~ timer.progress(i);
+                timer.progress(i);
             }
             for(uint i = 0; i < param_["sim"]; ++i) {
                 update();
                 measure();
-                //~ timer.progress(param_["term"] + i);
+                timer.progress(param_["term"] + i);
             }
-            timer.print(rngS_.seed(), H_, L_, param_["sim"], param_["term"], param_["g"], -std::log(data["swap_overlap"].mean()));
+            //~ timer.print(rngS_.seed(), H_, L_, param_["sim"], param_["term"], param_["g"], -std::log(data["swap_overlap"].mean()));
             timer.write(rngS_.seed(), H_, L_, param_["sim"], param_["term"], param_["g"], -std::log(data["swap_overlap"].mean()));
         }
         
