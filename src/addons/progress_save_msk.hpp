@@ -96,6 +96,6 @@ namespace addon {
         std::map<std::string, store_type> dict_;
         std::map<std::string, store_type *> ref_dict_;
     } checkpoint;
-
+}//end namespace detail
 
 #endif //__PROGRESS_SAVE_MSK_HEADER

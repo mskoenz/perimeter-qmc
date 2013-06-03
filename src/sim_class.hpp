@@ -130,7 +130,7 @@ namespace perimeter
             //------------------- init state -------------------
             grid_.set_shift_mode(qmc::ket_preswap);
             //------------------- init timer -------------------
-            addon::timer_class<addon::data> timer(param_["term"] + param_["sim"], "results.txt");
+            addon::timer_class<addon::data> timer(param_["term"] + param_["sim"], param_["res_file"]);
             timer.set_names("S_seed", "H", "L", "sim", "term", "grow", "S2");
             timer.set_comment("test");
             
