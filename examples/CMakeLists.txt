@@ -1,5 +1,5 @@
 FOREACH (name   sim_playground
-                #~ grid_performance_test
+                test_tile
     )
     add_executable(${name} ${name}.cpp)
     add_dependencies(${name} build_nr) #increases the build-number

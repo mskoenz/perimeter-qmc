@@ -44,7 +44,9 @@ namespace addon {
                 throw std::runtime_error("progress_save_class::operator(): please use different keys for different references");
             else
                 ref_dict_[key] = &i;
-            std::swap(dict_[key], defa);
+            if(dict_[key] > defa)
+                std::swap(dict_[key], defa);
+            
             return defa;
         }
         void write() {

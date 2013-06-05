@@ -401,7 +401,7 @@ def analyze_argv(arg):
                 summed.append(summed[i])
             summed.pop()
             pylab.plot(data[xind][begin:end], summed, "r-")
-            pylab.plot(data[xind][begin:end], data[yind][begin:end], "b--")
+            #~ pylab.plot(data[xind][begin:end], data[yind][begin:end], "b--")
         pylab.show()
     return 0
 

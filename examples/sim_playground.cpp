@@ -80,7 +80,9 @@ void run_dual_sim() {
 void run_single_sim() {
     addon::timer_class<addon::normal> timer(addon::parameter["L"]  +1);
 
-    for(uint i = addon::checkpoint("i", i); i <= addon::parameter["L"]; ++i) {
+    for(uint i = addon::checkpoint("i", i, 1); i <= addon::parameter["L"]; ++i) {
+    //~ for(uint i = addon::checkpoint("i", i, 1); i <= 2; ++i) {
+        DEBUG_VAR(i)
         timer.progress(i);
         addon::checkpoint.write();
         addon::parameter.set("g", i);
@@ -90,30 +92,32 @@ void run_single_sim() {
 }
 int main(int argc, char* argv[])
 {
-    std::string test = "";
-    //~ std::string test = "../../";
+    addon::global_seed.set(0);
+    
     addon::parameter.set("init0", 0);
     addon::parameter.set("init1", 0);
     addon::parameter.set("f", 1);
     addon::parameter.set("g", 0);
 
-    addon::parameter.set("term", 1000);
-    addon::parameter.set("sim", 100000);
+    addon::parameter.set("mult", 1);
 
     addon::parameter.set("H", 16);
     addon::parameter.set("L", 16);
-    addon::parameter.set("shift_file", "swap_16x16.txt");
+    addon::parameter.set("shift_file", "16x16_shift.txt");
     addon::parameter.set("res_file", "results.txt");
 
 
     addon::parameter.read(argc, argv);
-
+    
+    addon::parameter.set("term", addon::parameter["mult"] * 100000);
+    addon::parameter.set("sim", addon::parameter["mult"] * 1000000);
+    
     sim_class sim(addon::parameter.get());
 
     //~ test_sim(sim);
     //~ test_spin_copy(sim);
     //~ run_dual_sim();
     run_single_sim();
-
+    
     return 0;
 }

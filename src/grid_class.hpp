@@ -62,6 +62,8 @@ namespace perimeter {
                 
             init_grid(init);
             
+            init_tile();
+            
             init_loops();
         }
         void clear_check(){
@@ -91,20 +93,42 @@ namespace perimeter {
             //old partner of the new partner does the same
             old_partner->neighbor[b]->bond[state] = qmc::invert_bond - b;
         }
-        std::vector<bond_type> two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
-            std::vector<bond_type> res;
-            for(bond_type b = qmc::start_bond; b < qmc::n_bonds; ++b)
-                if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[state] != target.neighbor[b]->spin[state])
-                    res.push_back(b);
-            return res;
+        //------------------- omega impl -------------------
+        bool two_bond_update_intern_2(uint const & i, uint const & j, state_type const & state, uint const & tile) {
+            return grid_[i][j].tile_update(state, tile);
         }
-        //~ bond_type two_bond_update_site(site_type const & target, state_type const & state, state_type const & bra) const {
-            //~ for(bond_type b = qmc::start_bond; b < qmc::n_bonds; ++b)
-                //~ if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[state] != target.neighbor[b]->spin[state])
-                    //~ return b;
-            //~ return qmc::none;
-        //~ }
-        
+        bool two_bond_update_intern(uint const & i, uint const & j, state_type const & state) {
+            //only for square
+            assert(qmc::n_bonds == qmc::sqr);
+            
+            site_type & target = grid_[i][j];
+            
+            state_type bra = state;
+            if(bra >= qmc::n_bra) //it's a ket
+                bra = qmc::invert_state - state; //now it's a bra
+            if(target.bond[state] < 3) { // it's perhaps updateable
+                for(bond_type b = qmc::start_bond; b < 3; ++b) {
+                    if(target.bond[state] == target.neighbor[b]->bond[state] and target.spin[state] == qmc::invert_spin - target.neighbor[b]->spin[state]) {
+                        two_bond_flip(&target, target.partner(state), b, state);
+                        //~ res = true;
+                        //~ break;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        void clear_tile_spin() {
+            for(state_type state = qmc::start_state; state < qmc::n_states; ++state) {
+                std::for_each(begin(), end(), 
+                    [&](site_type & s) {
+                        for(uint i = 0; i < tile_type::tile_per_site; ++i) {
+                            CLEAR_BIT(s.tile[state][i].alpha, qmc::clear)
+                        }
+                    }
+                );
+            }
+        }
         void set_shift_mode(shift_type const & new_mode) {
             site_type::shift_mode_print = new_mode;
             shift_mode_ = new_mode;
@@ -116,7 +140,6 @@ namespace perimeter {
                     for(index_type j = 0; j < L_; ++j)
                         grid_[i][j].shift_region[shift_mode] = region(shift_mode, i, j);
         }
-        
         void copy_to_ket() {
             if(shift_mode_ == qmc::no_shift) {
                 for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
@@ -149,7 +172,7 @@ namespace perimeter {
         site_type const & operator()(index_type const i, index_type const j) const {
             return grid_[i][j];
         }
-
+        
         void init_loops() {
             n_loops_ = 0;
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra)
@@ -203,9 +226,9 @@ namespace perimeter {
                 
                 array_type<std::string> s(boost::extents[kmax * H_][5]);
                 vector_type<std::string> in;
-                for(index_type i = 0; i < H_; ++i) {
-                    
-                    if((flags & 1) == 1) { //print tragsition graph
+                if((flags & 1) == 1) { //print tragsition graph
+                    site_struct::print_alternate = 1;
+                    for(index_type i = 0; i < H_; ++i) {
                         for(index_type j = 0; j < L_; ++j) {
                             in = grid_[i][j].string_print(L_, bra, 0);
                             for(index_type k = 0; k < kmax; ++k) {
@@ -214,7 +237,11 @@ namespace perimeter {
                             }
                         }
                     }
-                    if((flags & 2) == 2) { //print bra
+                }
+                
+                if((flags & 2) == 2) { //print bra
+                    site_struct::print_alternate = 1;
+                    for(index_type i = 0; i < H_; ++i) {
                         for(index_type j = 0; j < L_; ++j) {
                             in = grid_[i][j].string_print(L_, bra, 1);
                             for(index_type k = 0; k < kmax; ++k) {
@@ -223,7 +250,10 @@ namespace perimeter {
                             }
                         }
                     }
-                    if((flags & 4) == 4) { //print ket
+                }
+                if((flags & 4) == 4) { //print ket
+                    site_struct::print_alternate = 1;
+                    for(index_type i = 0; i < H_; ++i) {
                         for(index_type j = 0; j < L_; ++j) {
                             in = grid_[i][j].string_print(L_, bra, 2);
                             for(index_type k = 0; k < kmax; ++k) {
@@ -254,6 +284,7 @@ namespace perimeter {
             int state = 0;
             
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
+                //~ state = 0;
                 std::for_each(begin(), end(), 
                     [&](site_type & s) {
                         state_type ket = qmc::invert_state - bra;
@@ -284,7 +315,7 @@ namespace perimeter {
                                 s.bond[ket] = (state/L_%2==0 ? qmc::diag_down:qmc::diag_up);
                             }
                         }
-                        s.loop[bra] = state;
+                        s.loop[bra] = 1-(state + state / L_)%2; //important for tile_init hex
                     ++state;
                     }
                 );
@@ -311,11 +342,20 @@ namespace perimeter {
                 }
             }
         }
+        void init_tile() {
+            for(state_type state = qmc::start_state; state < qmc::n_states; ++state) {
+                std::for_each(begin(), end(), 
+                    [&](site_type & s) {
+                        for(uint i = 0; i < tile_type::tile_per_site; ++i)
+                            s.tile[state][i].set_info(&s, state, i);
+                    }
+                );
+            }
+        }
         site_type * next_in_loop(site_type * const in, state_type & bra) {
             alternator_ = qmc::invert_state - alternator_;
             return in->loop_partner(alternator_, bra, shift_mode_); //alternator can be changed, as well as bra
         }
-        
     private:
         uint const H_; ///<height
         uint const L_; ///<length

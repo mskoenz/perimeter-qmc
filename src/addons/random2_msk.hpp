@@ -42,9 +42,25 @@ namespace addon
         typedef boost::lagged_fibonacci44497 type;
     };
     
-    namespace detail {
-        uint64_t prevent_correlations = 0;   ///< needed for multiple same-type-rngs
-    }
+    class global_seed_struct {
+    public:
+        global_seed_struct(): base_seed_(time(NULL)), seed_(base_seed_) {
+        }
+        void set(uint64_t const & seed) {
+            base_seed_ = seed;
+            seed_ = base_seed_;
+        }
+        uint64_t const & get() const {
+            return base_seed_;
+        }
+        uint64_t operator()() {
+            return seed_++; //prevent correlation
+        }
+    private:
+        uint64_t base_seed_;
+        uint64_t seed_;
+    } global_seed;
+    
     
     ///  \brief handy rng class
     ///  
@@ -117,8 +133,7 @@ namespace addon
             ///  it also burns the first 100 numbers. since it should be a chaotic system the a small difference in the seed
             ///  doesn't matter anymore after 100 calls
             inline void init() {
-                seed_ = time(NULL) + detail::prevent_correlations;
-                ++detail::prevent_correlations;
+                seed_ = global_seed();
                 rng.seed(seed_);
                 for(uint i = 0; i < 100; ++i) {
                     rng(); //warming up the rng
