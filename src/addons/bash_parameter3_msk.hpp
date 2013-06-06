@@ -166,7 +166,6 @@ namespace addon
             b.print(os);
             return os;
         }
-
     }//end namespace detail
     ///  \brief handles argv and assigns the arguments automatically
     ///  
@@ -200,7 +199,8 @@ namespace addon
         ///  
         ///  looks for options that correspond to those set earier. if found, it changes the variable to the value
         ///  after the option
-        void read(int argc, char* argv[]) {
+        template<typename T>
+        void read(int argc, T argv) {
             for(int i = 1; i < argc; i += 2) {
                 for(auto it = dict.begin(); it != dict.end(); ++it) {
                     if(("-" + (it->first)) == argv[i]) {
@@ -208,6 +208,8 @@ namespace addon
                         if(detail::convertable_to<T>(argv[i+1]))\
                             it->second = detail::convert<T>(argv[i+1]);\
                         else
+                        std::cout << i << std::endl;
+                        
                         
                         convert_op(double)
                         convert_op(std::string)
@@ -231,6 +233,30 @@ namespace addon
             else
                 throw std::runtime_error("key not found in bash_parameter");
         }
+        #ifdef __SERIALIZE_HEADER
+        void serialize(std::ofstream & io) {
+            int s = dict.size();
+            stream(io, s);
+            for(auto it = dict.begin(); it != dict.end(); ++it) {
+                stream(io, it->first);
+                stream(io, it->second);
+            }
+        }
+        void serialize(std::ifstream & io) {
+            uint n;
+            std::vector<std::string> argv;
+            argv.push_back("progname");
+            stream(io, n);
+            std::string s;
+            for(uint i = 0; i < n; ++i) {
+                stream(io, s);
+                argv.push_back("-" + s);
+                stream(io, s);
+                argv.push_back(s);
+            }
+            read(argv.size(), argv);
+        }
+        #endif
     private:
         map_type dict;    ///< the dictionary
     } parameter;

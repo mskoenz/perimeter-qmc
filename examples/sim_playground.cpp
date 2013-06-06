@@ -2,10 +2,11 @@
 // Date:    06.05.2013 12:07:06 EDT
 // File:    sim_playground.cpp
 
+#include <serialize.hpp>
 #include <iostream>
-#include <sim_class.hpp>
-#include <bash_parameter3_msk.hpp>
 #include <progress_save_msk.hpp>
+#include <bash_parameter3_msk.hpp>
+#include <sim_class.hpp>
 
 using namespace std;
 using namespace perimeter;
@@ -78,22 +79,28 @@ void run_dual_sim() {
 }
 
 void run_single_sim() {
-    addon::timer_class<addon::normal> timer(addon::parameter["L"]  +1);
+    addon::timer_class<addon::normal> timer(addon::parameter["L"]+1);
 
     for(uint i = addon::checkpoint("i", i, 1); i <= addon::parameter["L"]; ++i) {
-    //~ for(uint i = addon::checkpoint("i", i, 1); i <= 2; ++i) {
-        DEBUG_VAR(i)
         timer.progress(i);
         addon::checkpoint.write();
         addon::parameter.set("g", i);
         sim_class sim(addon::parameter.get());
+        std::ifstream ifs;
+        ifs.open("arch.txt");
+        if(ifs.is_open()) {
+            sim.serialize(ifs);
+            ifs.close();
+            std::cout << "done reserialize" << std::endl;
+        }
         sim.run();
+        remove("arch.txt");
     }
 }
 int main(int argc, char* argv[])
 {
-    addon::global_seed.set(0);
-    
+    //~ addon::global_seed.set(0);
+
     addon::parameter.set("init0", 0);
     addon::parameter.set("init1", 0);
     addon::parameter.set("f", 1);
@@ -103,6 +110,8 @@ int main(int argc, char* argv[])
 
     addon::parameter.set("H", 16);
     addon::parameter.set("L", 16);
+    addon::parameter.set("s", 2);
+    addon::parameter.set("S", 16);
     addon::parameter.set("shift_file", "16x16_shift.txt");
     addon::parameter.set("res_file", "results.txt");
 
@@ -113,11 +122,20 @@ int main(int argc, char* argv[])
     addon::parameter.set("sim", addon::parameter["mult"] * 1000000);
     
     sim_class sim(addon::parameter.get());
-
-    //~ test_sim(sim);
-    //~ test_spin_copy(sim);
-    //~ run_dual_sim();
-    run_single_sim();
+    sim.measure();
+    
+    std::string res_file = addon::parameter["res_file"];
+    for(uint l = addon::checkpoint("l", l, addon::parameter["s"]); l < addon::parameter["S"]; l += 4) {
+        addon::parameter.set("H", l);
+        addon::parameter.set("L", l);
+        std::stringstream ss;
+        ss << l << res_file;
+        addon::parameter.set("res_file", ss.str());
+        run_single_sim();
+    }
+    
+    
+    
     
     return 0;
 }

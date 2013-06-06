@@ -50,13 +50,13 @@ namespace perimeter {
               me = 0
             , start_bond = 1
             , down = 1
-            , hori
-            , up
-            , n_bonds
             , right
             , diag_down
             , diag_up
             , left
+            , up
+            , n_bonds
+            , hori
             , none
             , invert_bond = n_bonds - 1 + start_bond
             , tri = 6 + start_bond
@@ -241,6 +241,14 @@ namespace perimeter {
             check_bad_spin();
         }
         
+        #ifdef __SERIALIZE_HEADER
+        template<typename S>
+        void serialize(S & io) {
+            addon::stream(io, (*this));
+            addon::stream(io, alpha);
+        }
+        #endif
+        
         alpha_type alpha;
         site_type * site;
         state_type state;
@@ -403,6 +411,14 @@ namespace perimeter {
             check_bad_spin();
         }
         
+        #ifdef __SERIALIZE_HEADER
+        template<typename S>
+        void serialize(S & io) {
+            addon::stream(io, (*this));
+            addon::stream(io, alpha);
+        }
+        #endif
+        
         alpha_type alpha;
         site_type * site;
         state_type state;
@@ -506,6 +522,14 @@ namespace perimeter {
             check_bad_spin();
         }
         
+        #ifdef __SERIALIZE_HEADER
+        template<typename S>
+        void serialize(S & io) {
+            addon::stream(io, (*this));
+            addon::stream(io, alpha);
+        }
+        #endif
+        
         alpha_type alpha;
         site_type * site;
         state_type state;
@@ -590,7 +614,6 @@ namespace perimeter {
             }
         }
         ///  \brief the fancy print-function used by the grid_class
-        static uint print_alternate;
         std::vector<std::string> const string_print(uint const & L, state_type const & s1, uint const & what) const {
             std::vector<std::string> res;
             std::stringstream os;
@@ -655,6 +678,31 @@ namespace perimeter {
         bool tile_update(state_type const & state, uint const & t) {
             return tile[state][t].tile_update();
         }
+        #ifdef __SERIALIZE_HEADER
+        template<typename S>
+        void serialize(S & io) {
+            for(state_type i = 0; i < qmc::n_states; ++i) {
+                addon::stream(io, spin[i]);
+                addon::stream(io, bond[i]);
+                for(uint j = 0; j < tile_type::tile_per_site; ++j) {
+                    tile[i][j].serialize(io);
+                }
+            }
+            for(state_type i = 0; i < qmc::n_bra; ++i)
+                addon::stream(io, loop[i]);
+            
+            addon::stream(io, check);
+            addon::stream(io, shift_mode_print);
+            addon::stream(io, print_alternate);
+            
+            for(shift_type i = 0; i < qmc::n_shifts; ++i)
+                addon::stream(io, shift_region[i]);
+            
+            
+            
+        }
+        #endif
+        
         
         spin_type spin[qmc::n_states]; ///< looplabel for state
         loop_type loop[qmc::n_bra]; ///< looplabel for each transitiongraph
@@ -664,7 +712,7 @@ namespace perimeter {
         
         shift_type shift_region[qmc::n_shifts];
         static shift_type shift_mode_print;
-
+        static uint print_alternate;
         tile_type tile[qmc::n_states][tile_type::tile_per_site];
     private:
         ///  \brief plots the bonds in differente colors, depending how the config is

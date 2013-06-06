@@ -279,6 +279,19 @@ namespace perimeter {
         site_type * end() {
             return grid_.data() + grid_.num_elements();
         }
+        #ifdef __SERIALIZE_HEADER
+        template<typename S>
+        void serialize(S & io) {
+            addon::stream(io, n_loops_);
+            addon::stream(io, alternator_);
+            addon::stream(io, shift_mode_);
+            for(uint i = 0; i < H_; ++i) {
+                for(uint j = 0; j < L_; ++j) {
+                    grid_[i][j].serialize(io);
+                }
+            }
+        }
+        #endif
     private:
         void init_grid(std::vector<uint> const init) {
             int state = 0;

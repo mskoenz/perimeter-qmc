@@ -266,6 +266,12 @@ namespace addon {
                 }
             }
         }
+        template<typename F>
+        void progress_trigger(uint64_t const & i, F fct) {
+            if((i&((mod_<<3)-1)) == 0) {
+                fct();
+            }
+        }
         ///  \brief burns time
         ///  
         ///  @param dt is the amount of time in seconds one wants to "wait"

@@ -1,5 +1,6 @@
 FOREACH (name   sim_playground
                 test_tile
+                serialization
     )
     add_executable(${name} ${name}.cpp)
     add_dependencies(${name} build_nr) #increases the build-number

@@ -30,6 +30,14 @@ class accumulator_double
             os << "+/-";
             os << error();
         }
+        #ifdef __SERIALIZE_HEADER
+        template<typename S>
+        void serialize(S & io) {
+            addon::stream(io, count_);
+            addon::stream(io, sum_);
+            addon::stream(io, sum2_);
+        }
+        #endif
     private:
         uint64_t count_;
         double sum_;

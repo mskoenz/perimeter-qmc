@@ -174,12 +174,7 @@ namespace addon
             T offset;   ///< start of the range
             const short int shift;  ///< shows, what operations are needed (for speedup. Tested!)
             uint64_t seed_; ///< the used seed
-            //~ static uint64_t prevent_correlations;   ///< needed for multiple same-type-rngs
     };
-    
-    //~ template<typename T, typename RNG>
-    //~ uint64_t random_class<T, RNG>::prevent_correlations = 0;
-    
 }//end namespace addon
 
 #endif //__RANDOM2_MSK_HEADER

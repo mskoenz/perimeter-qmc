@@ -124,10 +124,13 @@ namespace perimeter {
                 update();
                 timer.progress(i);
             }
-            for(uint i = 0; i < param_["sim"]; ++i) {
+            std::ofstream ofs;
+            
+            for(uint i = addon::checkpoint("m", i, 0); i < param_["sim"]; ++i) {
                 update();
                 measure();
                 timer.progress(param_["term"] + i);
+                timer.progress_trigger(param_["term"] + i, [&](){addon::checkpoint.write(); ofs.open("arch.txt"); serialize(ofs); ofs.close();});
             }
             //~ timer.print(rngS_.seed(), H_, L_, param_["sim"], param_["term"], param_["g"], -std::log(data_["swap_overlap"].mean()), accept_.mean(), timer.loop_time());
             timer.write(addon::global_seed.get(), H_, L_, param_["sim"], param_["term"], param_["g"], -std::log(data_["swap_overlap"].mean()), accept_.mean(), timer.loop_time());
@@ -150,7 +153,19 @@ namespace perimeter {
         grid_class & grid() {
             return grid_;
         }
-    //~ private:
+        #ifdef __SERIALIZE_HEADER
+        template<typename S>
+        void serialize(S & io) {
+            grid_.serialize(io);
+            std::for_each(data_.begin(), data_.end(), 
+                [&](std::pair<std::string const, accumulator_double> & p) {
+                    p.second.serialize(io);
+                }
+            );
+            accept_.serialize(io);
+        }
+        #endif
+    private:
         map_type param_;
         const uint H_;
         const uint L_;

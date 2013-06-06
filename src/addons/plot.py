@@ -399,9 +399,10 @@ def analyze_argv(arg):
             for i in range(len(imed)):
                 summed[i] += float(imed[i])
                 summed.append(summed[i])
+                #~ print(i+1, summed[i])
             summed.pop()
-            pylab.plot(data[xind][begin:end], summed, "r-")
-            #~ pylab.plot(data[xind][begin:end], data[yind][begin:end], "b--")
+            pylab.plot(data[xind][begin:end], summed, "r^-")
+            #~ pylab.plot(data[xind][begin:end], data[yind][begin:end], "bo-")
         pylab.show()
     return 0
 

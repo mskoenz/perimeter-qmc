@@ -8,8 +8,6 @@
 #include <iostream>
 #include <cmath>
 
-using namespace std;
-
 class accumulator_simple
 {
     typedef uint64_t T;
@@ -20,19 +18,20 @@ class accumulator_simple
             sum_ += val;
             ++count_;
         }
-        void operator<<(bool const & val) {
-            if(val)
-                ++sum_;
-            ++count_;
-        }
         double mean() const {
             return sum_ / double(count_);
-            //~ return count_;
         }
         void print(std::ostream & os) const {
             os << sum_ << "/" << count_ << " = ";
             os << mean();
         }
+        #ifdef __SERIALIZE_HEADER
+        template<typename S>
+        void serialize(S & io) {
+            addon::stream(io, count_);
+            addon::stream(io, sum_);
+        }
+        #endif
     private:
         T count_;
         T sum_;
