@@ -1,4 +1,4 @@
-FOREACH (name   sim_playground
+FOREACH (name   sim
                 test_tile
                 serialization
     )

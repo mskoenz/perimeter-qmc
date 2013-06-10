@@ -222,7 +222,7 @@ namespace perimeter {
             for(index_type i = 0; i < state.size(); ++i) {
                 state_type bra = state[i];
                 os << "state nr: " << bra << std::endl;
-                const uint kmax = site_type::print_site_height();
+                const uint kmax = 3;
                 
                 array_type<std::string> s(boost::extents[kmax * H_][5]);
                 vector_type<std::string> in;

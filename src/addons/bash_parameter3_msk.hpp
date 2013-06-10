@@ -18,14 +18,18 @@ addon::parameter.get();
 
 */
 
+#include "color.hpp"
+
 #include <map>
 #include <vector>
 #include <cstdlib>
 #include <sstream>
+#include <fstream>
 #include <iostream>
 #include <typeinfo>
 #include <stdexcept>
 #include <memory>
+#include <algorithm>
 
 //timer2_msk.hpp documents addon
 namespace addon
@@ -201,15 +205,36 @@ namespace addon
         ///  after the option
         template<typename T>
         void read(int argc, T argv) {
-            for(int i = 1; i < argc; i += 2) {
-                for(auto it = dict.begin(); it != dict.end(); ++it) {
-                    if(("-" + (it->first)) == argv[i]) {
+            //------------------- set path -------------------
+            std::string dir(argv[0]);
+            auto pos = dir.rfind("/");
+            dir.erase(pos, dir.size() - pos);
+            set("prog_dir", dir + "/");
+            //------------------- if there is a bash_in.txt file -------------------
+            std::ifstream ifs;
+            ifs.open(dir + "/bash_in.txt");
+            std::vector<std::string> argf;
+            if(ifs.is_open()) {
+                
+                std::cout << GREEN << "bash_in.txt file found" << NONE << std::endl;
+                while(ifs) {
+                    argf.push_back("");
+                    ifs >> argf.back();
+                }
+                ifs.close();
+            }
+            //------------------- join manual input -------------------
+            for(int i = 0; i < argc; ++i) {
+                argf.push_back(argv[i]);
+            }
+            
+            for(uint i = 0; i < argf.size(); ++i) {
+                if(argf[i][0] == '-') {
+                    if(i + 1 < argf.size() and argf[i+1][0] != '-') {
                         #define convert_op(T)\
-                        if(detail::convertable_to<T>(argv[i+1]))\
-                            it->second = detail::convert<T>(argv[i+1]);\
+                        if(detail::convertable_to<T>(argf[i+1]))\
+                            set(argf[i].erase(0, 1), detail::convert<T>(argf[i+1]));\
                         else
-                        std::cout << i << std::endl;
-                        
                         
                         convert_op(double)
                         convert_op(std::string)
@@ -217,8 +242,14 @@ namespace addon
                         
                         #undef convert_op
                     }
+                    else
+                        set(argf[i].erase(0, 1), "not_set");
                 }
             }
+            
+            
+            
+            
         }
         ///  \brief returns the dict
         map_type get() const {
@@ -228,10 +259,10 @@ namespace addon
         ///  
         ///  just an abreviation for parameter.get()["key"]
         store_type & operator[](std::string const & key) {
-            if(dict.find(key) != dict.end())
+            //~ if(dict.find(key) != dict.end())
                 return dict[key];
-            else
-                throw std::runtime_error("key not found in bash_parameter");
+            //~ else
+                //~ throw std::runtime_error("key not found in bash_parameter");
         }
         #ifdef __SERIALIZE_HEADER
         void serialize(std::ofstream & io) {
@@ -257,6 +288,13 @@ namespace addon
             read(argv.size(), argv);
         }
         #endif
+        void print() {
+            std::for_each(dict.begin(), dict.end(), 
+                [&](std::pair<std::string const, store_type const &> p) {
+                    std::cout << p.first << ": " << p.second << std::endl;
+                }
+            );
+        }
     private:
         map_type dict;    ///< the dictionary
     } parameter;

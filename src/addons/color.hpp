@@ -7,6 +7,7 @@
 
 #ifndef NO_COLOR
 
+#define CLRSCR "\033[2J\033[100A"
 #define BLACK "\033[0;30m"
 #define BLACKB "\033[1;30m"
 #define RED "\033[0;31m"
@@ -36,6 +37,8 @@
 #define NONE "\033[0m" 
 
 #else //NO_COLOR
+
+#define CLRSCR ""
 
 #define BLACK ""
 #define BLACKB ""

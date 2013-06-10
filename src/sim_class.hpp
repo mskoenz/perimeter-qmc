@@ -30,15 +30,14 @@ namespace perimeter {
         sim_class(map_type const & param):    param_(param)
                                             , H_(param_["H"])
                                             , L_(param_["L"])
-                                            , grid_(H_, L_, {uint(param_["init0"]), uint(param_["init1"]), uint(param_["init2"]), uint(param_["init3"]), uint(param_["init4"])})
+                                            , grid_(H_, L_, std::vector<uint>(2, 0))
                                             , rngS_()
                                             , rngH_(H_)
                                             , rngL_(L_)
                                             {
-            shift_region_class sr_(param_["shift_file"]);
-            sr_.set_grow({qmc::right});
+            shift_region_class sr_(param_["shift"]);
+            sr_.set_grow(std::vector<bond_type>(1, qmc::right));
             sr_.grow(param_["g"]);
-            //~ sr_.print(2);
             grid_.set_shift_region(sr_);
         }
         
@@ -109,35 +108,49 @@ namespace perimeter {
             grid_.init_loops();
             data_["swap_loops"] << grid_.n_loops();
             data_["swap_overlap"] << pow(2.0, int(grid_.n_loops()) - loops);
+            data_["mean_for_error"] << pow(2.0, int(grid_.n_loops()) - loops);
             grid_.set_shift_mode(qmc::ket_preswap);
         }
-        
         void run() {
             //------------------- init state -------------------
             grid_.set_shift_mode(qmc::ket_preswap);
             //------------------- init timer -------------------
-            addon::timer_class<addon::data> timer(param_["term"] + param_["sim"], param_["res_file"]);
+            addon::timer_class<addon::data> timer(param_["term"] + param_["sim"], param_["res"]);
             timer.set_names("seed", "H", "L", "sim", "term", "grow", "S2", "accept", "loop_time");
             timer.set_comment("test");
             
+            std::string mean_file = std::string(param_["prog_dir"]) + "/mean.txt";
+            remove(mean_file.c_str());
+            
             for(uint i = 0; i < param_["term"]; ++i) {
                 update();
-                timer.progress(i);
+                timer.progress(i, param_["timer_dest"]);
             }
             std::ofstream ofs;
             
-            for(uint i = addon::checkpoint("m", i, 0); i < param_["sim"]; ++i) {
+            for(uint i = 0; i < param_["sim"]; ++i) {
                 update();
                 measure();
-                timer.progress(param_["term"] + i);
-                timer.progress_trigger(param_["term"] + i, [&](){addon::checkpoint.write(); ofs.open("arch.txt"); serialize(ofs); ofs.close();});
+                timer.progress(param_["term"] + i, param_["timer_dest"]);
+                if((i & 1023) == 0) {
+                    ofs.open(mean_file, std::ios::app);
+                    ofs << data_["mean_for_error"].mean() << std::endl;
+                    data_["mean_for_error"] = accumulator_double();
+                    ofs.close();
+                }
             }
-            //~ timer.print(rngS_.seed(), H_, L_, param_["sim"], param_["term"], param_["g"], -std::log(data_["swap_overlap"].mean()), accept_.mean(), timer.loop_time());
-            timer.write(addon::global_seed.get(), H_, L_, param_["sim"], param_["term"], param_["g"], -std::log(data_["swap_overlap"].mean()), accept_.mean(), timer.loop_time());
+            timer.write_state(param_["term"] + param_["sim"]);
             
-            //~ grid_.init_loops();
-            //~ grid_.print({0,1});
-            //~ grid_.print_all({0,1}, 2);
+            timer.write(addon::global_seed.get()
+                        , H_
+                        , L_
+                        , param_["sim"]
+                        , param_["term"]
+                        , param_["g"]
+                        , -std::log(data_["swap_overlap"].mean())
+                        , accept_.mean()
+                        , timer.loop_time()
+                        );
         }
         
         void present_data() {

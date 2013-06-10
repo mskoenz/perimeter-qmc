@@ -34,7 +34,6 @@ namespace addon {
         
     public:
         progress_save_class(): name_("checkpoint.txt") {
-            read();
         }
         ~progress_save_class() {
             reset();
@@ -44,6 +43,14 @@ namespace addon {
                 throw std::runtime_error("progress_save_class::operator(): please use different keys for different references");
             else
                 ref_dict_[key] = &i;
+            
+            //~ if(scope_ > scope_dict_[key]) {
+                //~ 
+            //~ }
+            //~ else
+                //~ 
+            //~ ++scope_;
+            
             if(dict_[key] > defa)
                 std::swap(dict_[key], defa);
             
@@ -60,6 +67,10 @@ namespace addon {
             );
             of_ << std::endl;
             of_.close();
+        }
+        void set_path(std::string const & path) {
+            name_ = path + name_;
+            read();
         }
     private:
         void read() {
@@ -94,10 +105,16 @@ namespace addon {
             remove(name_.c_str());
         }
     private:
-        std::string const name_;
+        std::string name_;
         std::map<std::string, store_type> dict_;
+        
+        static int scope_;
+        std::map<std::string, int> scope_dict_;
+        
         std::map<std::string, store_type *> ref_dict_;
     } checkpoint;
+    
+    int progress_save_class::scope_ = 0;
 }//end namespace detail
 
 #endif //__PROGRESS_SAVE_MSK_HEADER

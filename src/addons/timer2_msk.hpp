@@ -105,6 +105,13 @@ namespace addon {
     ///  it will print the same output in the file that is shown with print(...)
     struct normal {
     };
+    namespace dest {
+        enum dest_enum {
+              console = 0
+            , file
+        };
+    }//end namespace dest
+    
     namespace detail {
         uint active_timer_ = 0;
     }//end namespace detail
@@ -156,7 +163,7 @@ namespace addon {
             of_.close();
         }
         ///  \brief returns the elapsed usertime in [s]
-        operator double() {
+        operator double() const {
             return elapsed();
         }
         ///  \brief returns the last mesured loop-time in [us]
@@ -166,7 +173,6 @@ namespace addon {
             else
                 return (elapsed() * 1000000) / work_;
         }
-        
         ///  \brief name the data
         ///  
         ///  the names cannot contain spaces. a runtime_error will be thrown is so.
@@ -213,6 +219,30 @@ namespace addon {
                 }
             }
         }
+        double p(uint64_t const & i) const {
+            return double(i) / work_;
+        }
+        std::string time_predict(uint64_t const & i) const {
+            std::stringstream ss;
+            double e = elapsed();
+            double p2(double(i - first_i_) / (work_ - first_i_));
+            uint time_pred((1-p2)/p2*e);
+            ss << std::setfill('0') << std::setw(2) << time_pred/3600 << ":"
+                                    << std::setw(2) << (time_pred/60)%60 << ":"
+                                    << std::setw(2) << time_pred%60 << std::setfill(' ');
+            return ss.str();
+        }
+        void write_state(uint64_t const & i) {
+            int pos = name_.rfind("/");
+            std::string state_f = name_;
+            state_f = state_f.erase(pos, name_.size() - pos) + "/state.txt";
+            std::ofstream of_;
+            of_.open(state_f.c_str());
+            of_ << "p " << p(i) << std::endl;
+            of_ << "t " << time_predict(i) << std::endl;
+            of_ << "l " << loop_time() << std::endl;
+            of_.close();
+        }
         ///  \brief autotuned low-overhead progress display
         ///  
         ///  @param i is the loop, variable that is assumed to be in the intervall [0-workload)
@@ -221,40 +251,38 @@ namespace addon {
         ///  behavior using an power 2 modulo operation (binary &) at the start of the function. The modulo-factor
         ///  is changed dynamically, s.t. the print only happens every 1-2s. The overhead is minimal since it's only
         ///  a binary & operation most of the time. (takes 20% of the time of a single mersenne-rng() call)
-        void progress(uint64_t const & i) {
+        void progress(uint64_t const & i, uint const & mode = dest::console) {
             if((i&(mod_-1)) == 0)
             {
                 if(elapsed() - last_print_ > 1) {
                     double e = elapsed();
                     if(e - last_print_ > 3 and mod_ > 1)
                         mod_ >>= 1;
-                    
-                    if(last_print_ != 0)
-                        std::cout << "\x1B[1A" << "\x1B[2K" << "\x1B[80D"; //move 1 up // kill all("2K") /to left("1K") /to right("K") line // move 80 left
-                    if(first_i_ == -1)
-                        first_i_ = i;
-                    
-                    
-                    //~ double p = double(i - last_i_) / (work_ - last_i_);
-                    double p(double(i) / work_);
-                    double p2(double(i - first_i_) / (work_ - first_i_));
+
                     last_print_ = e;
                     last_i_ = i;
                     loop_time_ = (e * 1000000) / (i - first_i_);
-                    uint time_predict((1-p2)/p2*e);
                     
-                    for(uint i = 0; i < timer_id_; ++i) {
-                        std::cout << "        ";
+                    if(mode == dest::console) {
+                        if(last_print_ != 0)
+                            std::cout << "\x1B[1A" << "\x1B[2K" << "\x1B[80D"; //move 1 up // kill all("2K") /to left("1K") /to right("K") line // move 80 left
+                        if(first_i_ == -1)
+                            first_i_ = i;
+                        
+                        
+                        for(uint i = 0; i < timer_id_; ++i) {
+                            std::cout << "        ";
+                        }
+                        
+                        std::cout   << "progress: " << REDB << std::setprecision(4) << std::setw(3) << int(100 * p(i)) << "% " << NONE
+                                    << "  loop-time: " << std::setw(7) << std::setprecision(4) << loop_time_ << " us"
+                                    << "  mod: " << std::setw(10) << mod_ 
+                                    << "  left: " << GREENB << time_predict(i) << NONE
+                                    << std::endl;
                     }
-                    
-                    std::cout   << "progress: " << REDB << std::setprecision(4) << std::setw(3) << 100 * p << "% " << NONE
-                                << "  loop-time: " << std::setw(7) << std::setprecision(4) << loop_time_ << " us"
-                                << "  mod: " << std::setw(10) << mod_ 
-                                << "  left: " << GREENB << std::setfill('0') << std::setw(2) << time_predict/3600 << ":"
-                                << std::setw(2) << (time_predict/60)%60 << ":"
-                                << std::setw(2) << time_predict%60 << std::setfill(' ') << NONE
-                                << std::endl;
-                    
+                    else if(mode == dest::file) {
+                        write_state(i);
+                    }
                 }
                 else {
                     if(first_i_ == -1)
@@ -268,7 +296,7 @@ namespace addon {
         }
         template<typename F>
         void progress_trigger(uint64_t const & i, F fct) {
-            if((i&((mod_<<3)-1)) == 0) {
+            if((i&((mod_<<1)-1)) == 0) {
                 fct();
             }
         }
@@ -289,7 +317,7 @@ namespace addon {
         ///  \brief retruns the elapsed usertime in [s]
         ///  
         ///  works the same as the double cast
-        double elapsed() {
+        double elapsed() const {
             #ifdef __TIMER2_MSK_USE_BOOST_CLOCK
                 return timer_.elapsed().user / 1000000000.0;
             #elif defined(__TIMER2_MSK_USE_C_CLOCK)

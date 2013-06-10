@@ -106,6 +106,7 @@ namespace perimeter {
     //  +---------------------------------------------------+
     //  |            spezialisation for the hex             |
     //  +---------------------------------------------------+
+    /*
     template<typename site_type>
     struct tile_struct<site_type, qmc::hex>: public std::bitset<6> {
     private:
@@ -255,6 +256,7 @@ namespace perimeter {
     };
     template<typename site_type>
     std::bitset<6> constexpr tile_struct<site_type, qmc::hex>::patterns[2];
+    /**/
     //  +---------------------------------------------------+
     //  |            spezialisation for the tri             |
     //  +---------------------------------------------------+
@@ -264,21 +266,9 @@ namespace perimeter {
         tile_struct(): alpha(0) {
         }
         //------------------- constants -------------------
-        static uint constexpr tile_per_site = 3;
-        static uint constexpr n_patterns = 2;
-        static std::bitset<qmc::n_bonds> constexpr patterns[3][3] = {
-                                                                     {(1<<qmc::down) + (1<<qmc::up)
-                                                                   ,  (1<<qmc::diag_down) + (1<<qmc::diag_up)
-                                                                   ,  (1<<qmc::right) + (1<<qmc::left) + 1}
-                                                                   
-                                                                   , {(1<<qmc::down) + (1<<qmc::up)
-                                                                   ,  (1<<qmc::right) + (1<<qmc::left)
-                                                                   ,  (1<<qmc::diag_down) + (1<<qmc::diag_up) + 1}
-                                                                    
-                                                                   , {(1<<qmc::diag_down) + (1<<qmc::diag_up)
-                                                                   ,  (1<<qmc::right) + (1<<qmc::left)
-                                                                   ,  (1<<qmc::down) + (1<<qmc::up) + 1}
-                                                                   };
+        static uint const tile_per_site = 3;
+        static uint const n_patterns = 2;
+        static std::bitset<qmc::n_bonds> const patterns[3][3];
         
         void check_bad_bond() {
             for(uint i = 0; i < n_patterns; ++i) {
@@ -434,10 +424,23 @@ namespace perimeter {
         bond_type diag_inv_;
     };
     template<typename site_type>
-    std::bitset<qmc::n_bonds> constexpr tile_struct<site_type, qmc::tri>::patterns[3][3];
+    std::bitset<qmc::n_bonds> const tile_struct<site_type, qmc::tri>::patterns[3][3] = {
+                                                                     {(1<<qmc::down) + (1<<qmc::up)
+                                                                   ,  (1<<qmc::diag_down) + (1<<qmc::diag_up)
+                                                                   ,  (1<<qmc::right) + (1<<qmc::left) + 1}
+                                                                   
+                                                                   , {(1<<qmc::down) + (1<<qmc::up)
+                                                                   ,  (1<<qmc::right) + (1<<qmc::left)
+                                                                   ,  (1<<qmc::diag_down) + (1<<qmc::diag_up) + 1}
+                                                                    
+                                                                   , {(1<<qmc::diag_down) + (1<<qmc::diag_up)
+                                                                   ,  (1<<qmc::right) + (1<<qmc::left)
+                                                                   ,  (1<<qmc::down) + (1<<qmc::up) + 1}
+                                                                   };;
     //  +---------------------------------------------------+
     //  |            spezialisation for the sqr             |
     //  +---------------------------------------------------+
+    /*
     template<typename site_type>
     struct tile_struct<site_type, qmc::sqr>: public std::bitset<qmc::n_bonds> {
         typedef int alpha_type;
@@ -536,7 +539,7 @@ namespace perimeter {
     };
     template<typename site_type>
     std::bitset<qmc::n_bonds> constexpr tile_struct<site_type, qmc::sqr>::patterns[2];
-    
+    /**/
     struct site_struct;
     
     typedef tile_struct<site_struct, qmc::n_bonds> tile_type;
@@ -669,10 +672,6 @@ namespace perimeter {
             }
             
             
-        }
-        ///  \brief returns how many lines a fancy plot needs
-        constexpr static const uint print_site_height() {
-            return 3;
         }
         
         bool tile_update(state_type const & state, uint const & t) {
