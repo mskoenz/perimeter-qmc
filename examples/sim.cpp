@@ -24,7 +24,8 @@ int main(int argc, char* argv[])
 
     p["H"] = 16;
     p["L"] = 16;
-    p["shift"] = "30x30_shift.txt";
+    p["shift"] = "shift.txt";
+    p["spaceing"] = 1;
     p["res"] = "results.txt";
     p["timer_dest"] = 1;
 
@@ -43,6 +44,11 @@ int main(int argc, char* argv[])
     sim_class sim(p.get());
     
     sim.run();
+    
+    std::ofstream ofs;
+    ofs.open(std::string(p["prog_dir"]) + "/last_config.txt");
+    sim.serialize(ofs);
+    ofs.close();
     
     return 0;
 }

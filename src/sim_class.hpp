@@ -30,14 +30,17 @@ namespace perimeter {
         sim_class(map_type const & param):    param_(param)
                                             , H_(param_["H"])
                                             , L_(param_["L"])
-                                            , grid_(H_, L_, std::vector<uint>(2, 0))
+                                            , grid_(H_, L_, std::vector<uint>(2, 2))
                                             , rngS_()
                                             , rngH_(H_)
                                             , rngL_(L_)
                                             {
-            shift_region_class sr_(param_["shift"]);
-            sr_.set_grow(std::vector<bond_type>(1, qmc::right));
-            sr_.grow(param_["g"]);
+                                                
+            //~ shift_region_class sr_(param_["shift"]);
+            //~ sr_.set_grow(std::vector<bond_type>(1, qmc::right));
+            shift_region_class sr_(H_, L_, param_["spaceing"]);
+            sr_.grow_partial(param_["g"]);
+            sr_.write(param_["shift"]);
             grid_.set_shift_region(sr_);
         }
         
@@ -46,8 +49,6 @@ namespace perimeter {
                 accept_ << grid_.two_bond_update_intern_2(i, j, state, int(rngS_() * 3));
             else
                 accept_ << grid_.two_bond_update_intern_2(i, j, state, 0);
-                //~ accept_ << grid_.two_bond_update_intern(i, j, state);
-            
         }
         
         void spin_update() {
@@ -98,6 +99,7 @@ namespace perimeter {
             
             grid_.set_shift_mode(qmc::ket_preswap);
             spin_update();
+            //~ grid_.init_loops();
         }
         
         void measure() {

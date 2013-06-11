@@ -14,7 +14,7 @@
 namespace perimeter {
     class shift_region_class {
     public:
-        shift_region_class(std::string filename): grow_level_(0) {
+        shift_region_class(std::string filename): grow_level_(2) {
             std::ifstream in(filename);
             std::string temp;
             if(in.is_open()) {
@@ -49,6 +49,21 @@ namespace perimeter {
             }
             convert_1_to_2();
         }
+        shift_region_class(uint const & H, uint const & L, double const & spaceing): H_(H), L_(L), N_(2), grow_level_(2) {
+            stage2_ = std::vector<std::vector<std::vector<uint>>>(N_, std::vector<std::vector<uint>>(H_, std::vector<uint>(L_, 0)));
+            set_grow(std::vector<bond_type>(1, qmc::right));
+            
+            uint grow_count = 0;
+            for(uint j = 0; j < 2; ++j) {
+                for(uint i = 0; i < H_; ++i) {
+                    stage2_[1][i][j] = 1;
+                    if(std::round((2.0 - spaceing) * H_) > grow_count++)
+                        stage2_[0][i][j] = 1;
+                }
+            }
+            convert_2_to_1();
+        }
+        
         void print(uint flags = 1) const {
             if((flags&1) == 1) {
                 std::cout << "--------stage1-graphical--------" << std::endl;
@@ -90,86 +105,62 @@ namespace perimeter {
                 for(uint j = 0; j < L_; ++j)
                     stage2_[0][i][j] = !stage2_[0][i][j];
         }
-        void grow(int steps_in = 1) {
-            steps_in -= 2;//TODO: remove later
+        
+        uint & get_neighbor(uint const & level, uint const & i, uint const & j, uint const & dir) {
+            switch(dir) {
+                case(qmc::down):
+                    return stage2_[level][(i + 1) % H_][j];
+                    break;
+                case(qmc::right):
+                    return stage2_[level][i][(j + 1) % L_];
+                    break;
+                case(qmc::diag_down):
+                    return stage2_[level][(i + 1) % H_][(j + 1) % L_];
+                    break;
+                case(qmc::diag_up):
+                    return stage2_[level][(i + H_ - 1) % H_][(j + L_ - 1) % L_];
+                    break;
+                case(qmc::left):
+                    return stage2_[level][i][(j + L_ - 1) % L_];
+                    break;
+                case(qmc::up):
+                    return stage2_[level][(i + H_ - 1) % H_][j];
+                    break;
+                case(qmc::hori):
+                    if((i+j) % 2 == 1)
+                        return stage2_[level][i][(j + L_ - 1) % L_];
+                    else
+                        return stage2_[level][i][(j + 1) % L_];
+                default:
+                    throw std::runtime_error("false direction given in shift_region_class::get_neighbor");
+            }
+        }
+        
+        void grow_partial(double steps_in = 1) {
+            steps_in -= 2;
+            uint steps = std::abs(steps_in) + 1;
+            uint grow_count = 0;
+            uint max_grow = std::round(std::abs(steps_in) * H_);
             const uint just_grown = 1000;
-            uint steps = std::abs(steps_in);
             grow_level_ += steps;
             for(uint level = 0; level < N_; ++level) {
+                grow_count = 0;
                 for(uint k = 0; k < steps; ++k) {
-                    for(uint i = 0; i < H_; ++i) {
-                        for(uint j = 0; j < L_; ++j) {
-                            uint grow_factor = stage2_[level][i][j];
+                    for(uint j = 0; j < L_; ++j) {
+                        for(uint i = 0; i < H_; ++i) {
+                            uint i_eff = steps_in < 0 ? H_ - i - 1: i;
+                            uint j_eff = steps_in < 0 ? L_ - j - 1: j;
+                            uint grow_factor = stage2_[level][i_eff][j_eff];
                             if(grow_factor > 0 and grow_factor < just_grown) {
                                 std::for_each(grow_dir_.begin(), grow_dir_.end(), 
                                     [&](uint const & dir) {
-                                        switch(dir) {
-                                            case(qmc::down):
-                                                if(stage2_[level][(i + 1) % H_][j] == 0){
-                                                    if(steps_in < 0)
-                                                        stage2_[level][i][j] = just_grown;
-                                                    else
-                                                        stage2_[level][(i + 1) % H_][j] = grow_factor + just_grown;
-                                                }
-                                                break;
-                                            case(qmc::right):
-                                                if(stage2_[level][i][(j + 1) % L_] == 0 and qmc::n_bonds != qmc::hex){
-                                                    if(steps_in < 0)
-                                                        stage2_[level][i][j] = just_grown;
-                                                    else
-                                                        stage2_[level][i][(j + 1) % L_] = grow_factor + just_grown;
-                                                }
-                                                break;
-                                            case(qmc::diag_down):
-                                                if(stage2_[level][(i + 1) % H_][(j + 1) % L_] == 0 and qmc::n_bonds == qmc::tri){
-                                                    if(steps_in < 0)
-                                                        stage2_[level][i][j] = just_grown;
-                                                    else
-                                                        stage2_[level][(i + 1) % H_][(j + 1) % L_] = grow_factor + just_grown;
-                                                }
-                                                break;
-                                            case(qmc::diag_up):
-                                                if(stage2_[level][(i + H_ - 1) % H_][(j + L_ - 1) % L_] == 0 and qmc::n_bonds == qmc::tri){
-                                                    if(steps_in < 0)
-                                                        stage2_[level][i][j] = just_grown;
-                                                    else
-                                                        stage2_[level][(i + H_ - 1) % H_][(j + L_ - 1) % L_] = grow_factor + just_grown;
-                                                }
-                                                break;
-                                            case(qmc::left):
-                                                if(stage2_[level][i][(j + L_ - 1) % L_] == 0 and qmc::n_bonds != qmc::hex){
-                                                    if(steps_in < 0)
-                                                        stage2_[level][i][j] = just_grown;
-                                                    else
-                                                        stage2_[level][i][(j + L_ - 1) % L_] = grow_factor + just_grown;
-                                                }
-                                                break;
-                                            case(qmc::up):
-                                                if(stage2_[level][(i + H_ - 1) % H_][j] == 0){
-                                                    if(steps_in < 0)
-                                                        stage2_[level][i][j] = just_grown;
-                                                    else
-                                                        stage2_[level][(i + H_ - 1) % H_][j] = grow_factor + just_grown;
-                                                }
-                                                break;
-                                            case(qmc::hori):
-                                                if((i+j) % 2 == 1) {
-                                                    if(stage2_[level][i][(j + L_ - 1) % L_] == 0  and qmc::n_bonds == qmc::hex){
-                                                        if(steps_in < 0)
-                                                            stage2_[level][i][j] = just_grown;
-                                                        else
-                                                            stage2_[level][i][(j + L_ - 1) % L_] = grow_factor + just_grown;
-                                                    }
-                                                }
-                                                else {
-                                                    if(stage2_[level][i][(j + 1) % L_] == 0  and qmc::n_bonds == qmc::hex){
-                                                        if(steps_in < 0)
-                                                            stage2_[level][i][j] = just_grown;
-                                                        else
-                                                            stage2_[level][i][(j + 1) % L_] = grow_factor + just_grown;
-                                                    }
-                                                }
-                                                break;
+                                        if(get_neighbor(level, i_eff, j_eff, dir) == 0){
+                                            if(grow_count++ < max_grow) {
+                                                if(steps_in < 0)
+                                                    stage2_[level][i_eff][j_eff] = just_grown;
+                                                else
+                                                    get_neighbor(level, i_eff, j_eff, dir) = grow_factor + just_grown;
+                                            }
                                         }
                                     }
                                 );
@@ -185,6 +176,41 @@ namespace perimeter {
                 }
             }
         }
+        
+        void grow(int steps_in = 1) {
+            steps_in -= 2;//TODO: remove later
+            const uint just_grown = 1000;
+            uint steps = std::abs(steps_in);
+            grow_level_ += steps;
+            for(uint level = 0; level < N_; ++level) {
+                for(uint k = 0; k < steps; ++k) {
+                    for(uint i = 0; i < H_; ++i) {
+                        for(uint j = 0; j < L_; ++j) {
+                            uint grow_factor = stage2_[level][i][j];
+                            if(grow_factor > 0 and grow_factor < just_grown) {
+                                std::for_each(grow_dir_.begin(), grow_dir_.end(), 
+                                    [&](uint const & dir) {
+                                        if(get_neighbor(level, i, j, dir) == 0){
+                                            if(steps_in < 0)
+                                                stage2_[level][i][j] = just_grown;
+                                            else
+                                                get_neighbor(level, i, j, dir) = grow_factor + just_grown;
+                                        }
+                                    }
+                                );
+                            }
+                        }
+                    }
+                    for(uint i = 0; i < H_; ++i) {
+                        for(uint j = 0; j < L_; ++j) {
+                            if(stage2_[level][i][j] >= just_grown)
+                                stage2_[level][i][j] -= just_grown;
+                        }
+                    }
+                }
+            }
+        }
+        
         void write(std::string filename) {
             convert_2_to_1();
             

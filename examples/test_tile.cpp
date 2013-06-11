@@ -23,8 +23,8 @@ int main(int argc, char* argv[])
     addon::parameter.set("L", 4);
     addon::parameter.set("shift_file", "16x16_shift.txt");
     addon::parameter.set("res_file", "results.txt");
-
-
+    
+    
     addon::parameter.read(argc, argv);
     
     addon::parameter.set("term", addon::parameter["mult"] * 100000);
