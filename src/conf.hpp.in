@@ -1,0 +1,11 @@
+// Author:  Mario S. Könz <mskoenz@gmx.net>
+// Date:    12.06.2013 14:54:07 EDT
+// File:    conf.hpp
+
+#ifndef __CONF_HEADER
+#define __CONF_HEADER
+
+#define GRID_TYPE @USE_GRID@
+#define S_ORDER @USE_S@
+
+#endif //__CONF_HEADER

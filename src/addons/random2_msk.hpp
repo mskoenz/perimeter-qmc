@@ -56,6 +56,13 @@ namespace addon
         uint64_t operator()() {
             return seed_++; //prevent correlation
         }
+        #ifdef __SERIALIZE_HEADER
+        template<typename Archive>
+        void serialize(Archive & ar) {
+            stream(ar, base_seed_);
+            stream(ar, seed_);
+        }
+        #endif //__SERIALIZE_HEADER
     private:
         uint64_t base_seed_;
         uint64_t seed_;
@@ -96,6 +103,7 @@ namespace addon
             ///  
             ///  here the const shift variable makes sure, that the minimal amount of operations needed is executed
             inline T operator()() {
+                ++count_;
                 if (shift == 0) {
                     return impl_picker<RNG, int>()(rng());
                 }
@@ -124,6 +132,21 @@ namespace addon
                 return seed_;
             }
             
+            #ifdef __SERIALIZE_HEADER
+            template<typename Archive>
+            void serialize(Archive & ar) {
+                stream(ar, count_);
+                stream(ar, seed_);
+                
+                if(typeid(std::ifstream).name() == typeid(Archive).name()) {
+                    for(uint64_t i = 0; i < count_; ++i) {
+                        rng();
+                    }
+                    //~ DEBUG_MSG("waste done " << count_)
+                }
+                
+            }
+            #endif //__SERIALIZE_HEADER
         private:
             ///  \brief initializes rng
             ///  
@@ -133,6 +156,7 @@ namespace addon
             ///  it also burns the first 100 numbers. since it should be a chaotic system the a small difference in the seed
             ///  doesn't matter anymore after 100 calls
             inline void init() {
+                count_ = 0;
                 seed_ = global_seed();
                 rng.seed(seed_);
                 for(uint i = 0; i < 100; ++i) {
@@ -174,6 +198,7 @@ namespace addon
             T offset;   ///< start of the range
             const short int shift;  ///< shows, what operations are needed (for speedup. Tested!)
             uint64_t seed_; ///< the used seed
+            uint64_t count_; ///< counts how many number are used
     };
 }//end namespace addon
 

@@ -72,6 +72,10 @@ namespace addon {
             name_ = path + name_;
             read();
         }
+        void reset() {
+            remove(name_.c_str());
+            dict_.clear();
+        }
     private:
         void read() {
             std::string buffer = "";
@@ -100,9 +104,6 @@ namespace addon {
             }
             else
                 std::cout << YELLOW << "no checkpoint file found" << NONE << std::endl;
-        }
-        void reset() {
-            remove(name_.c_str());
         }
     private:
         std::string name_;

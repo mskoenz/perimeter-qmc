@@ -15,6 +15,11 @@
 #include <boost/integer.hpp>
 #include <addons/color.hpp>
 
+#include <conf.hpp>
+
+#define STRINGIFY_HELPER(x) #x
+#define STRINGIFY(x) STRINGIFY_HELPER(x) //is needed, believe it or not ...
+
 #define DEBUG_VAR(x) std::cout << "\033[1;31m" << "  DEBUG_VAR: " << "\033[0;31m" << #x << " = " << x << "\033[0m" << std::endl;
 #define DEBUG_MSG(x) std::cout << "\033[1;31m" << "  DEBUG_MSG: " << "\033[0;31m" << x << "\033[0m" << std::endl;
 
@@ -35,7 +40,7 @@ namespace perimeter {
         ///  n_bra specifies how many transition graphes there are
         enum state_enum {
               start_state = 0
-            , n_bra = 2
+            , n_bra = S_ORDER
             , n_states = n_bra * 2
             , invert_state = n_states - 1
         };
@@ -46,6 +51,7 @@ namespace perimeter {
         ///  with just up, down and hori (for horizontal) one gets the hexagonal grid.
         ///  the bonds have to be arranged in such a manner, that
         ///  invert_bond - bond == opposite_bond. e.g. up and down are opposite
+        #if GRID_TYPE == 3
         enum bond_enum {
               me = 0
             , start_bond = 1
@@ -63,6 +69,43 @@ namespace perimeter {
             , sqr = 4 + start_bond
             , hex = 3 + start_bond
         };
+        #elif GRID_TYPE == 4
+        enum bond_enum {
+              me = 0
+            , start_bond = 1
+            , down = 1
+            , right
+            , left
+            , up
+            , n_bonds
+            , diag_down
+            , diag_up
+            , hori
+            , none
+            , invert_bond = n_bonds - 1 + start_bond
+            , tri = 6 + start_bond
+            , sqr = 4 + start_bond
+            , hex = 3 + start_bond
+        };
+        #elif GRID_TYPE == 6
+        enum bond_enum {
+              me = 0
+            , start_bond = 1
+            , down = 1
+            , hori
+            , up
+            , n_bonds
+            , diag_down
+            , right
+            , left
+            , diag_up
+            , none
+            , invert_bond = n_bonds - 1 + start_bond
+            , tri = 6 + start_bond
+            , sqr = 4 + start_bond
+            , hex = 3 + start_bond
+        };
+        #endif
         ///  \brief contains the information about the spins
         ///  
         ///  the spins have to be arranged in such a manner, that
@@ -217,12 +260,16 @@ namespace perimeter {
         void set_info(site_type * const _site, state_type const & _state, uint const & _idx) {
             assert(alpha == 0);
             
-            if(_site->loop[_state]) {
+            state_type bra = (_state < qmc::n_bra ? _state : qmc::invert_state - _state);
+            
+            if(_site->loop[bra]) {
                 alpha = qmc::not_used;
                 site = NULL;
                 state = 0;
+                DEBUG_MSG("nope")
                 return;
             }
+            DEBUG_MSG("run")
             state = _state;
             site = _site;
             alpha = 0;

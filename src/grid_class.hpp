@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <vector>
 #include <map>
+#include <set>
 #include <memory>
 #include <algorithm>
 #include <typeinfo>
@@ -56,6 +57,11 @@ namespace perimeter {
             assert(L_>0);
             assert(qmc::n_states > 0);
             assert(qmc::n_bonds == qmc::tri or qmc::n_bonds == qmc::sqr or qmc::n_bonds == qmc::hex);
+            
+            if(qmc::n_bonds == qmc::hex) {
+                if(H_ % 3 != 0 or L_%3 != 0)
+                    throw std::runtime_error("L and H must be divisible by 3 for the hex grid");
+            }
             
             while(init.size() < qmc::n_bra)
                 init.push_back(0);
@@ -297,7 +303,7 @@ namespace perimeter {
             int state = 0;
             
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
-                //~ state = 0;
+                state = 0;
                 std::for_each(begin(), end(), 
                     [&](site_type & s) {
                         state_type ket = qmc::invert_state - bra;

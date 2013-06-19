@@ -264,6 +264,11 @@ namespace addon
             //~ else
                 //~ throw std::runtime_error("key not found in bash_parameter");
         }
+        bool contains(std::string const & key) const {
+            if(dict.find(key) != dict.end())
+                return true;
+            return false;
+        }
         #ifdef __SERIALIZE_HEADER
         void serialize(std::ofstream & io) {
             int s = dict.size();
@@ -287,7 +292,7 @@ namespace addon
             }
             read(argv.size(), argv);
         }
-        #endif
+        #endif //__SERIALIZE_HEADER
         void print() {
             std::for_each(dict.begin(), dict.end(), 
                 [&](std::pair<std::string const, store_type const &> p) {

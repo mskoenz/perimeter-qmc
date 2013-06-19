@@ -49,7 +49,7 @@ namespace perimeter {
             }
             convert_1_to_2();
         }
-        shift_region_class(uint const & H, uint const & L, double const & spaceing): H_(H), L_(L), N_(2), grow_level_(2) {
+        shift_region_class(uint const & H, uint const & L, double const & spacing): H_(H), L_(L), N_(2), grow_level_(2) {
             stage2_ = std::vector<std::vector<std::vector<uint>>>(N_, std::vector<std::vector<uint>>(H_, std::vector<uint>(L_, 0)));
             set_grow(std::vector<bond_type>(1, qmc::right));
             
@@ -57,7 +57,7 @@ namespace perimeter {
             for(uint j = 0; j < 2; ++j) {
                 for(uint i = 0; i < H_; ++i) {
                     stage2_[1][i][j] = 1;
-                    if(std::round((2.0 - spaceing) * H_) > grow_count++)
+                    if(std::round((2.0 - spacing) * H_) > grow_count++)
                         stage2_[0][i][j] = 1;
                 }
             }
