@@ -115,6 +115,16 @@ def fancy_progress_bar(p):
     else:
         GREEN(bar + NONE_ + end)
 #------------------- state files ------------------- 
+def read_state_file_impl(path_dir):
+    ofs = open(path_dir + "/state.txt", "r")
+    ll = ofs.readlines()
+    ofs.close()
+    tel = {}
+    for l in ll:
+        l = l.split();
+        tel[l[0]] = to_number(l[1])
+    return tel
+    
 queue = 0
 done = 0
 run = 0
@@ -142,13 +152,7 @@ def read_state_files(path, dirs):
         if exists(path_dir + "/state.txt"):
             fail = True
             while(fail):
-                ofs = open(path_dir + "/state.txt", "r")
-                ll = ofs.readlines()
-                ofs.close()
-                tel = {}
-                for l in ll:
-                    l = l.split();
-                    tel[l[0]] = to_number(l[1])
+                tel = read_state_file_impl(path_dir);
                 
                 try: #it can happen that the file is read during c++ is writing in it and then p is not found
                     total_p += tel["p"];
@@ -222,11 +226,17 @@ def write_bash_files(path, dirs):
     recursion(path, dirs, write_bash_file)
 #------------------- prog start -------------------
 def launch_program(path_dir, prog):
-    #~ if not exists(path_dir + "/state.txt"): 
+    if not exists(path_dir + "/state.txt"):
         bash("sqsub -q serial " + parameter["sq"] + " -o run.log " + path_dir + "/" + prog)
-    #~ else:
-        #~ YELLOW(path_dir + "/" + prog + " was already submitted")
-    #~ bash(path_prog + " & ")
+    else:
+        tel = read_state_file_impl(path_dir);
+        if "p" in tel.keys():
+            if tel["p"] == 1:
+                GREEN(path_dir + "/" + prog + " is done")
+                return
+                
+        YELLOW(path_dir + "/" + prog + " is restarted")
+        bash("sqsub -q serial " + parameter["sq"] + " -o run.log " + path_dir + "/" + prog)
 #------------------- recursion forward ------------------- 
 def launch_programs(prog, path, dirs):
     fct = lambda path_dir: launch_program(path_dir, prog)
@@ -253,6 +263,7 @@ def main():
     parameter.read(sys.argv)
     
     if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] == "-a"):
+        
         modules = glob.glob("./*.py")
         modules.remove("./sync.py")
         modules.remove("./plotv2.py")
@@ -304,15 +315,15 @@ def main():
     bash_if("s", lambda:read_state_files(root, dirs))
     
     bash_if("c", lambda:collect_results(root, dirs))
-    bash_if("p", "./plotv2.py " + root + "/colres.txt -p -x X -y Entropy -err Error -sp 1 -o " + root + "/plot.svg")
+    bash_if("p", "./plotv2.py " + root + "/colres.txt -p -x X -y Entropy -err Error -acc -sp 1 -o " + root + "/plot.svg")
     
     bash_if("clean", lambda:( rmfolder(root)
                             , bash("rm *.log")
                             , bash("rm *.png")
                             , bash("rm *.txt")
-                            , bash("cd ../../build;  make clean")
+                            , bash("cd ../project/build;  make clean")
                             ))
-    bash_if("comp", "cd ../../build; cmake ../ " + parameter["cmake"] + "; make sim")
+    bash_if("comp", "cd ../project/build; cmake ../ " + parameter["cmake"] + "; make sim")
     bash_if("make", lambda: ( mkfolder(root)
                             , mkfolders(root, dirs)
                             , cp_to_folders(files, root, dirs)
@@ -321,7 +332,7 @@ def main():
     bash_if("del", lambda: ( delete_files(root, dirs, ["sim"]) ))
     bash_if("run", lambda:launch_programs("sim", root, dirs))
     
-    bash_if("kill", lambda:kill_programs(1575427, 1575911))
+    bash_if("kill", lambda:kill_programs(1583456, 1583458))
     
 
 if __name__ == "__main__":

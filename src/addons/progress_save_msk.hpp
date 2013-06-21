@@ -10,7 +10,6 @@
 #include <map>
 #include <fstream>
 #include <sstream>
-#include <stdio.h>
 #include <utility>
 #include <iostream>
 #include <algorithm>

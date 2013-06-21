@@ -2,6 +2,7 @@ FOREACH (name   sim
                 viz
                 test_tile
                 serialization
+                test_serialize
     )
     add_executable(${name} ${name}.cpp)
     add_dependencies(${name} build_nr) #increases the build-number

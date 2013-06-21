@@ -169,23 +169,28 @@ def main():
             pd = [];
             
             
-            data[p["y_"]] = np.add.accumulate(data[p["y_"]])
             
-            if p.contains("err_"):
-                errmean = np.mean(data[p["err_"]])
-                #~ data[p["err_"]] = np.add.accumulate(data[p["err_"]])
-                data[p["err_"]] = np.sqrt(np.add.accumulate(np.square(data[p["err_"]])))
-            
+            if p.contains("acc"):
+                data[p["y_"]] = np.add.accumulate(data[p["y_"]])
+                if p.contains("err_"):
+                    errmean = np.mean(data[p["err_"]])
+                    #~ data[p["err_"]] = np.add.accumulate(data[p["err_"]])
+                    data[p["err_"]] = np.sqrt(np.add.accumulate(np.square(data[p["err_"]])))
+                
             for l in range(L):
                 pd.append(get_range(data[l])) #get the datarange that needs to be plotted
-            
-            #~ if p.contains("ed"):
-            s = int(len(pd[p["y_"]])/2)
-            print("{0} {1} {2} {3} {4}".format(errmean
-                                             , pd[p["y_"]][s]
-                                             , pd[p["err_"]][s]
-                                             , pd[p["y_"]][-1]
-                                             , pd[p["err_"]][-1]))
+                
+            if p.contains("acc"):
+                s = int(len(pd[p["y_"]])/2)
+                ofs = open("cross_res.txt", "a")
+                ofs.write(" {0} {1} {2} {3} {4} {5} {6}\n".format(errmean
+                                                 , pd[p["y_"]][s-1]
+                                                 , pd[p["err_"]][s-1]
+                                                 , pd[p["y_"]][s]
+                                                 , pd[p["err_"]][s]
+                                                 , pd[p["y_"]][-1]
+                                                 , pd[p["err_"]][-1]))
+                ofs.close()
             
             if not p.contains("err"):
                 ax.plot(pd[p["x_"]]
@@ -213,22 +218,23 @@ def main():
             leg.get_frame().set_alpha(0.5)
         #------------------- parameter box ------------------- 
         else:
-            text  = ""
-            text += "{0}: {1:.0f}\n".format("H", data[:,-2][labels.index("H")])
-            text += "{0}: {1:.0f}\n".format("L", data[:,-2][labels.index("L")])
-            #~ text += "{0}: {1:.0f}%\n".format("Accept", 100*data[:,-2][labels.index("Accept")])
-            #~ text += "{0}: {1:.0f}\n".format("Seed", data[:,-2][labels.index("Seed")])
-            #~ text += "{0}: {1:.0f}us".format("Update Time", data[:,-2][labels.index("Loop Time[us]")])
-            
-            ax.text(0.37
-                  , 0.22
-                  , text
-                  , transform=ax.transAxes
-                  , fontsize=12
-                  , verticalalignment='top'
-                  , bbox=dict(boxstyle='round', facecolor='white', alpha=0.5)
-                  )
-        pylab.xlim([0, 100])
+            if p.contains("acc"):
+                text  = ""
+                text += "{0}: {1:.0f}\n".format("H", data[:,-2][labels.index("H")])
+                text += "{0}: {1:.0f}\n".format("L", data[:,-2][labels.index("L")])
+                text += "{0}: {1:.0f}%\n".format("Accept", 100*data[:,-2][labels.index("Accept")])
+                #~ text += "{0}: {1:.0f}\n".format("Seed", data[:,-2][labels.index("Seed")])
+                text += "{0}: {1:.0f}us".format("Update Time", data[:,-2][labels.index("Loop Time[us]")])
+                ax.text(0.37
+                      , 0.22
+                      , text
+                      , transform=ax.transAxes
+                      , fontsize=12
+                      , verticalalignment='top'
+                      , bbox=dict(boxstyle='round', facecolor='white', alpha=0.5)
+                      )
+        if p.contains("acc"):
+            pylab.xlim([pd[p["x_"]][0], pd[p["x_"]][-1]])
         pylab.savefig(p["o"])
         GREENB(p["o"] + " is done")
     

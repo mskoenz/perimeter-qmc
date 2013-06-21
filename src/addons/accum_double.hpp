@@ -4,8 +4,6 @@
 #include <iostream>
 #include <cmath>
 
-using namespace std;
-
 class accumulator_double
 {
     public:
@@ -20,6 +18,7 @@ class accumulator_double
             return sum_ / count_;
         }
         double deviation() const {
+            using std::sqrt;
             return sqrt(sum2_ / (count_ - 1) - sum_ * sum_ / count_ / (count_ - 1));
         }
         double error() const {
@@ -30,14 +29,12 @@ class accumulator_double
             os << "+/-";
             os << error();
         }
-        #ifdef __SERIALIZE_HEADER
-        template<typename S>
-        void serialize(S & io) {
-            addon::stream(io, count_);
-            addon::stream(io, sum_);
-            addon::stream(io, sum2_);
+        template<typename Archive>
+        void serialize(Archive & ar) {
+            ar & count_;
+            ar & sum_;
+            ar & sum2_;
         }
-        #endif
     private:
         uint64_t count_;
         double sum_;

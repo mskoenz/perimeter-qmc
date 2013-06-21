@@ -151,6 +151,7 @@ namespace perimeter {
     //  +---------------------------------------------------+
     template<typename site_type>
     struct tile_struct<site_type, qmc::hex>: public std::bitset<6> {
+        typedef std::bitset<6> base_type;
     private:
         enum tile_enum_hex {
               bond0 = 0
@@ -286,14 +287,11 @@ namespace perimeter {
             check_bad_bond();
             check_bad_spin();
         }
-        
-        #ifdef __SERIALIZE_HEADER
-        template<typename S>
-        void serialize(S & io) {
-            addon::stream(io, (*this));
-            addon::stream(io, alpha);
+        template<typename Archive>
+        void serialize(Archive & ar) {
+            ar & *static_cast<base_type*>(this); //upcast
+            ar & alpha;
         }
-        #endif
         
         alpha_type alpha;
         site_type * site;
@@ -308,6 +306,8 @@ namespace perimeter {
     template<typename site_type>
     struct tile_struct<site_type, qmc::tri>: public std::bitset<qmc::n_bonds> {
         typedef int alpha_type;
+        typedef std::bitset<qmc::n_bonds> base_type;
+        
         tile_struct(): alpha(0) {
         }
         //------------------- constants -------------------
@@ -446,13 +446,11 @@ namespace perimeter {
             check_bad_spin();
         }
         
-        #ifdef __SERIALIZE_HEADER
-        template<typename S>
-        void serialize(S & io) {
-            addon::stream(io, (*this));
-            addon::stream(io, alpha);
+        template<typename Archive>
+        void serialize(Archive & ar) {
+            ar & *static_cast<base_type*>(this); //upcast
+            ar & alpha;
         }
-        #endif
         
         alpha_type alpha;
         site_type * site;
@@ -488,6 +486,8 @@ namespace perimeter {
     template<typename site_type>
     struct tile_struct<site_type, qmc::sqr>: public std::bitset<qmc::n_bonds> {
         typedef int alpha_type;
+        typedef std::bitset<qmc::n_bonds> base_type;
+        
         tile_struct(): alpha(0) {
         }
         //------------------- constants -------------------
@@ -568,13 +568,11 @@ namespace perimeter {
             check_bad_spin();
         }
         
-        #ifdef __SERIALIZE_HEADER
-        template<typename S>
-        void serialize(S & io) {
-            addon::stream(io, (*this));
-            addon::stream(io, alpha);
+        template<typename Archive>
+        void serialize(Archive & ar) {
+            ar & *static_cast<base_type*>(this); //upcast
+            ar & alpha;
         }
-        #endif
         
         alpha_type alpha;
         site_type * site;
@@ -721,30 +719,18 @@ namespace perimeter {
         bool tile_update(state_type const & state, uint const & t) {
             return tile[state][t].tile_update();
         }
-        #ifdef __SERIALIZE_HEADER
-        template<typename S>
-        void serialize(S & io) {
-            for(state_type i = 0; i < qmc::n_states; ++i) {
-                addon::stream(io, spin[i]);
-                addon::stream(io, bond[i]);
-                for(uint j = 0; j < tile_type::tile_per_site; ++j) {
-                    tile[i][j].serialize(io);
-                }
-            }
-            for(state_type i = 0; i < qmc::n_bra; ++i)
-                addon::stream(io, loop[i]);
-            
-            addon::stream(io, check);
-            addon::stream(io, shift_mode_print);
-            addon::stream(io, print_alternate);
-            
-            for(shift_type i = 0; i < qmc::n_shifts; ++i)
-                addon::stream(io, shift_region[i]);
-            
-            
-            
+        template<typename Archive>
+        void serialize(Archive & ar) {
+            ar & spin;
+            ar & bond;
+            ar & loop;
+            ar & check;
+            ar & shift_mode_print;
+            ar & print_alternate;
+            ar & shift_region;
+            ar & tile;
         }
-        #endif
+        
         
         
         spin_type spin[qmc::n_states]; ///< looplabel for state

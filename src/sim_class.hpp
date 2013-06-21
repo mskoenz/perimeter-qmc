@@ -11,6 +11,7 @@
 
 #include <random2_msk.hpp>
 #include <timer2_msk.hpp>
+#include <immortal_msk.hpp>
 #include <bash_parameter3_msk.hpp>
 #include <accum_double.hpp>
 #include <accum_simple.hpp>
@@ -25,13 +26,6 @@
 
 //perimeter is documented in grid_class.hpp
 namespace perimeter {
-    bool exists(std::string const & filename) {
-        std::ifstream ifs(filename);
-        return ifs;
-    }
-    
-    
-    
     class sim_class {
         typedef typename grid_class::index_type index_type;
         typedef typename grid_class::site_type site_type;
@@ -161,44 +155,32 @@ namespace perimeter {
                           );
             timer.set_comment("test");
             
-            std::string mean_file = std::string(param_["prog_dir"]) + "/mean.txt";
-            std::string conf_file[2] = {std::string(param_["prog_dir"]) + "/last_config_1.txt"
-                                      , std::string(param_["prog_dir"]) + "/last_config_2.txt"};
-            uint what_file;
-            addon::checkpoint("f", what_file);
+            std::string mean_file = (std::string)param_["prog_dir"] + "/mean.txt";
             
             std::vector<double> bins;
             
             if(param_.find("fix") == param_.end()) {
-            
+                
                 if(param_.find("del") != param_.end()) {
+                    addon::immortal.reset();
                     remove(mean_file.c_str());
-                    remove(conf_file[0].c_str());
-                    remove(conf_file[1].c_str());
-                    remove((std::string(param_["prog_dir"]) + "/state.txt").c_str());
-                    addon::checkpoint.reset();
+                    remove((std::string(param_["prog_dir"]) + "/state.txt").c_str()); //timer...
                 }
-                if(!exists(conf_file[what_file])) {
+                if(addon::immortal.available()) {
+                    std::cout << GREENB << "load data at index " << addon::immortal.get_index() << NONE << std::endl;
+                    addon::immortal >> (*this);
+                }
+                else {
                     //------------------- term -------------------
+                    std::cout << std::endl;
                     for(uint i = 0; i < param_["term"]; ++i) {
                         update();
                         timer.progress(i, param_["timer_dest"]);
                     }
                 }
-                else {
-                    std::ifstream ifs;
-                    ifs.open(conf_file[what_file]);
-                    serialize(ifs);
-                    ifs.close();
-                    
-                }
-                
-                
                 //------------------- sim -------------------
                 std::ofstream ofs;
-                for(uint i = addon::checkpoint("i", i); i < param_["sim"]; ++i) {
-                    if((i & ((1lu<<14) - 1)) == 0)
-                        addon::checkpoint.write();
+                for(uint i = addon::immortal.get_index(0); i < param_["sim"]; ++i) {
                     
                     update();
                     measure();
@@ -212,14 +194,9 @@ namespace perimeter {
                         if((i & ((1lu<<14) - 1)) == ((1lu<<14) - 1)) {
                             //------------------- write out bins -------------------
                             write_bins(bins, mean_file);
-                            //~ //------------------- serialize config -------------------
-                            
-                            std::ofstream ofs;
-                            ofs.open(conf_file[what_file]);
-                            serialize(ofs);
-                            ofs.close();
-                            
-                            //~ what_file = 1 - what_file;
+                            //------------------- serialize config -------------------
+                            addon::immortal << (*this);
+                            addon::immortal.write_next_index(i + 1);
                         }
                     }
                 }
@@ -314,22 +291,15 @@ namespace perimeter {
         grid_class & grid() {
             return grid_;
         }
-        #ifdef __SERIALIZE_HEADER
-        template<typename S>
-        void serialize(S & io) {
-            rngS_.serialize(io);
-            rngH_.serialize(io);
-            rngL_.serialize(io);
-            grid_.serialize(io);
-            std::for_each(data_.begin(), data_.end(), 
-                [&](std::pair<std::string const, accumulator_double> & p) {
-                    p.second.serialize(io);
-                }
-            );
-            accept_.serialize(io);
-            addon::global_seed.serialize(io);
+        template<typename Archive>
+        void serialize(Archive & ar) {
+            ar & rngS_;
+            ar & rngH_;
+            ar & rngL_;
+            ar & accept_;
+            ar & grid_;
+            ar & data_;
         }
-        #endif
     private:
         map_type param_;
         const uint H_;

@@ -25,13 +25,11 @@ class accumulator_simple
             os << sum_ << "/" << count_ << " = ";
             os << mean();
         }
-        #ifdef __SERIALIZE_HEADER
-        template<typename S>
-        void serialize(S & io) {
-            addon::stream(io, count_);
-            addon::stream(io, sum_);
+        template<typename Archive>
+        void serialize(Archive & ar) {
+            ar & count_;
+            ar & sum_;
         }
-        #endif
     private:
         T count_;
         T sum_;

@@ -19,6 +19,7 @@ addon::parameter.get();
 */
 
 #include "color.hpp"
+#include "serialize/archive_enum.hpp"
 
 #include <map>
 #include <vector>
@@ -51,7 +52,6 @@ namespace addon
         private:
             T t_;
         };
-        
         //------------------- runtime checks -------------------
         template<typename T>
         bool convertable_to(const std::string& str) {
@@ -149,7 +149,7 @@ namespace addon
             create_cast_op(double)
             
             #undef create_cast_op
-            //------------------- print -------------------
+            //------------------- print & serialize-------------------
             void print(std::ostream & os = std::cout) const {
                 #define print_op(T)\
                 if(type == tn<T>())\
@@ -162,6 +162,26 @@ namespace addon
                 
                 #undef print_op
             };
+            template<typename Archive>
+            void serialize(Archive & ar) {
+                ar & type;
+                
+                #define serialize_op(T)\
+                if(type == tn<T>()){ \
+                    T t; \
+                    if(Archive::type == archive_enum::output) \
+                        t = T(*this); \
+                    ar & t; \
+                    set(t); \
+                } \
+                else
+                
+                serialize_op(std::string)
+                serialize_op(double)
+                    ; //last else
+                
+                #undef serialize_op
+            }
         private:
             std::shared_ptr<any_base> any;
             type_type type;
@@ -269,30 +289,10 @@ namespace addon
                 return true;
             return false;
         }
-        #ifdef __SERIALIZE_HEADER
-        void serialize(std::ofstream & io) {
-            int s = dict.size();
-            stream(io, s);
-            for(auto it = dict.begin(); it != dict.end(); ++it) {
-                stream(io, it->first);
-                stream(io, it->second);
-            }
+        template<typename Archive>
+        void serialize(Archive & ar) {
+            ar & dict;
         }
-        void serialize(std::ifstream & io) {
-            uint n;
-            std::vector<std::string> argv;
-            argv.push_back("progname");
-            stream(io, n);
-            std::string s;
-            for(uint i = 0; i < n; ++i) {
-                stream(io, s);
-                argv.push_back("-" + s);
-                stream(io, s);
-                argv.push_back(s);
-            }
-            read(argv.size(), argv);
-        }
-        #endif //__SERIALIZE_HEADER
         void print() {
             std::for_each(dict.begin(), dict.end(), 
                 [&](std::pair<std::string const, store_type const &> p) {

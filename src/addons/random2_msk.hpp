@@ -16,6 +16,7 @@ rng();
 
 #include <boost/random.hpp>
 #include <time.h>
+#include "serialize/archive_enum.hpp"
 
 //timer2_msk.hpp documents addon
 namespace addon
@@ -131,22 +132,16 @@ namespace addon
             inline unsigned long int seed() {
                 return seed_;
             }
-            
-            #ifdef __SERIALIZE_HEADER
             template<typename Archive>
             void serialize(Archive & ar) {
-                stream(ar, count_);
-                stream(ar, seed_);
-                
-                if(typeid(std::ifstream).name() == typeid(Archive).name()) {
-                    for(uint64_t i = 0; i < count_; ++i) {
-                        rng();
-                    }
-                    //~ DEBUG_MSG("waste done " << count_)
-                }
-                
+                ar & count_;
+                ar & seed_;
+                //~ if(Archive::type == archive_enum::input) {
+                    //~ for(uint64_t i = 0; i < count_; ++i) {
+                        //~ rng();
+                    //~ }
+                //~ }
             }
-            #endif //__SERIALIZE_HEADER
         private:
             ///  \brief initializes rng
             ///  

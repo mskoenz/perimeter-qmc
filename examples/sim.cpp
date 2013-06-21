@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
     p["shift"] = prog_dir + std::string(p["shift"]);
     p["res"] = prog_dir + std::string(p["res"]);
     
-    addon::checkpoint.set_path(p["prog_dir"]);
+    addon::immortal.set_path(p["prog_dir"]);
     
     sim_class sim(p.get());
     
