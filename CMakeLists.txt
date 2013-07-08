@@ -4,7 +4,7 @@ project(MasterThesis)
 #=================== compiler & flags ===================
 SET(CMAKE_CXX_COMPILER "g++-4.7")
 #~ SET(CMAKE_CXX_COMPILER "cc")
-SET(CMAKE_CXX_FLAGS "-Wall -std=c++0x -O3 -pedantic")
+SET(CMAKE_CXX_FLAGS "-Wall -std=c++11 -O3 -pedantic")
 #~ SET(CMAKE_EXE_LINKER_FLAGS "-pg")
 
 #=================== set paths ===================

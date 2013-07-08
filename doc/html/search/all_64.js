@@ -1,6 +1,0 @@
-var searchData=
-[
-  ['data',['data',['../structaddon_1_1data.html',1,'addon']]],
-  ['data_5fwriter',['data_writer',['../classaddon_1_1timer__class.html#aac3057bf598ad644fad842ca41ca0b7a',1,'addon::timer_class']]],
-  ['dict',['dict',['../classaddon_1_1bash__parameter__class.html#aaa39760ed8199e285cea55d74725d6f0',1,'addon::bash_parameter_class::dict()'],['../classaddon_1_1bash__parameter__class.html#a9ef2dc2a181b84a72e655abedb345986',1,'addon::bash_parameter_class::dict()']]]
-];
