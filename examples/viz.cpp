@@ -2,7 +2,6 @@
 // Date:    13.06.2013 12:06:28 EDT
 // File:    vis.cpp
 
-#include <serialize.hpp>
 #include <iostream>
 #include <progress_save_msk.hpp>
 #include <bash_parameter3_msk.hpp>
@@ -39,22 +38,13 @@ int main(int argc, char* argv[])
     p["shift"] = prog_dir + std::string(p["shift"]);
     p["res"] = prog_dir + std::string(p["res"]);
     
-    addon::checkpoint.set_path(p["prog_dir"]);
-    
     sim_class sim(p.get());
     
     remove((prog_dir + "/../../../SimuViz/Example/viz.txt").c_str());
     
-    //~ sim.simuviz_frame();
-    //~ sim.simuviz_frame();
-    for(uint i = 0; i < 100; ++i) {
+    for(size_t i = 0; i < 100; ++i) {
         sim.update();
     }
-    
-    std::ofstream ofs;
-    ofs.open(std::string(p["prog_dir"]) + "/last_config.txt");
-    sim.serialize(ofs);
-    ofs.close();
-    
+        
     return 0;
 }

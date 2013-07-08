@@ -2,7 +2,7 @@
 // Date:    05.06.2013 16:28:19 EDT
 // File:    serialization.cpp
 
-#include <serialize.hpp>
+#include <addons/serialize/fserial.hpp>
 #include <iostream>
 #include <fstream>
 #include <accum_simple.hpp>
@@ -18,21 +18,10 @@ int main(int argc, char* argv[])
     
     addon::parameter.read(argc, argv);
     
-    std::bitset<6> a("10100");
+    addon::fserial_class ar("arch.txt");
+    ar << addon::parameter;
     
-    std::ofstream ofs;
-    ofs.open("arch.txt");
-    //~ a.serialize(ofs);
-    addon::stream(ofs, a);
-    addon::parameter.serialize(ofs);
-    ofs.close();
-    
-    std::ifstream ifs;
-    ifs.open("arch.txt");
-    addon::stream(ifs, a);
-    
-    addon::parameter.serialize(ifs);
-    ifs.close();
+    ar >> addon::parameter;
     
     std::cout << addon::parameter["H"] << std::endl;
     std::cout << addon::parameter["file"] << std::endl;

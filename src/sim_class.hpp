@@ -34,7 +34,7 @@ namespace perimeter {
         sim_class(map_type const & param):    param_(param)
                                             , H_(param_["H"])
                                             , L_(param_["L"])
-                                            , grid_(H_, L_, std::vector<uint>(2, qmc::n_bonds == qmc::hex ? 2 : 0))
+                                            , grid_(H_, L_, std::vector<size_t>(2, qmc::n_bonds == qmc::hex ? 2 : 0))
                                             , rngS_()
                                             , rngH_(H_)
                                             , rngL_(L_)
@@ -47,8 +47,8 @@ namespace perimeter {
             //~ sr_.write(param_["shift"]);
             grid_.set_shift_region(sr_);
             
-            for(uint i = 0; i < H_; i += 4) {
-                for(uint j = 0; j < L_; j+= 4) {
+            for(size_t i = 0; i < H_; i += 4) {
+                for(size_t j = 0; j < L_; j+= 4) {
                     //~ two_bond_update(i+3, j+1, 0, 1);
                     //~ two_bond_update(i+3, j+3, 0, 1);
                     //~ two_bond_update(i+3, j+3, 1, 1);
@@ -125,7 +125,7 @@ namespace perimeter {
             grid_.clear_tile_spin();
             
             for(state_type state = qmc::start_state; state < qmc::n_states; ++state)
-                for(uint i = 0; i < H_ * L_; ++i) {
+                for(size_t i = 0; i < H_ * L_; ++i) {
                     bool ok = two_bond_update(rngH_(), rngL_(), state);
                     accept_ << ok;
                     #ifdef SIMUVIZ_FRAMES
@@ -209,14 +209,14 @@ namespace perimeter {
                 else {
                     //------------------- term -------------------
                     std::cout << std::endl;
-                    for(uint i = 0; i < param_["term"]; ++i) {
+                    for(size_t i = 0; i < param_["term"]; ++i) {
                         update();
                         timer.progress(i, param_["timer_dest"]);
                     }
                 }
                 //------------------- sim -------------------
                 std::ofstream ofs;
-                for(uint i = addon::immortal.get_index(0); i < param_["sim"]; ++i) {
+                for(size_t i = addon::immortal.get_index(0); i < param_["sim"]; ++i) {
                     
                     update();
                     measure();
@@ -289,8 +289,8 @@ namespace perimeter {
             ofs << std::endl << std::endl;
             
             if(qmc::n_bonds == qmc::tri) {
-                for(uint i = 0; i < H_; ++i) {
-                    for(uint j = 0; j < L_; ++j) {
+                for(size_t i = 0; i < H_; ++i) {
+                    for(size_t j = 0; j < L_; ++j) {
                         ofs << grid_(i, j).spin[0] << " ";
                         ofs << get_bond(grid_(i, j), qmc::up, spin_up) << " ";
                         ofs << get_bond(grid_(i, j), qmc::diag_up, spin_up) << " ";
@@ -299,8 +299,8 @@ namespace perimeter {
                     ofs << std::endl;
                 }
             } else if(qmc::n_bonds == qmc::hex) {
-                for(uint i = 0; i < H_; ++i) {
-                    for(uint j = 0; j < L_; j+=2) {
+                for(size_t i = 0; i < H_; ++i) {
+                    for(size_t j = 0; j < L_; j+=2) {
                         if(i % 2 == 0) {
                             ofs << grid_(i, j).spin[0] << " 2 2 " 
                                << get_bond(grid_(i, j), qmc::up, spin_up) << " 2 2 2 2  " 
@@ -338,8 +338,8 @@ namespace perimeter {
         }
     //~ private:
         map_type param_;
-        const uint H_;
-        const uint L_;
+        const size_t H_;
+        const size_t L_;
         grid_class grid_;
         addon::random_class<double, addon::mersenne> rngS_;
         addon::random_class<int, addon::mersenne> rngH_;

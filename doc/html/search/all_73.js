@@ -19,6 +19,6 @@ var searchData=
   ['spin_5fenum',['spin_enum',['../namespaceperimeter_1_1qmc.html#aa0e5da3e0ac9a13324834d2cd1e04d4a',1,'perimeter::qmc']]],
   ['spin_5ftype',['spin_type',['../namespaceperimeter.html#a5781ab83036bdd965cecbda12bb640c6',1,'perimeter']]],
   ['state_5fenum',['state_enum',['../namespaceperimeter_1_1qmc.html#a50cc7855dc6020cf401ee460b3eba7e8',1,'perimeter::qmc']]],
-  ['state_5ftype',['state_type',['../namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567',1,'perimeter']]],
-  ['string_5fprint',['string_print',['../structperimeter_1_1site__struct.html#af0bbf037c3fa06c5b891527f80a09319',1,'perimeter::site_struct']]]
+  ['state_5ftype',['state_type',['../namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e',1,'perimeter']]],
+  ['string_5fprint',['string_print',['../structperimeter_1_1site__struct.html#abb367b5de8f90021680aa3188635f8d6',1,'perimeter::site_struct']]]
 ];

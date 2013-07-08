@@ -111,23 +111,23 @@ typedef <a class="el" href="structperimeter_1_1site__struct.html">site_struct</a
 <tr class="memitem:a40d91e034c3d55770bfd62f7acb22df2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a40d91e034c3d55770bfd62f7acb22df2"></a>
 typedef vector_type&lt; <a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> &gt;<br class="typebreak"/>
 ::size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classperimeter_1_1grid__class.html#a40d91e034c3d55770bfd62f7acb22df2">index_type</a></td></tr>
-<tr class="memdesc:a40d91e034c3d55770bfd62f7acb22df2"><td class="mdescLeft">&#160;</td><td class="mdescRight">normally a uint <br/></td></tr>
+<tr class="memdesc:a40d91e034c3d55770bfd62f7acb22df2"><td class="mdescLeft">&#160;</td><td class="mdescRight">normally a size_t <br/></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a742aef09721b4a81ceab58e9fe3b7e42"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a742aef09721b4a81ceab58e9fe3b7e42"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>grid_class</b> (uint const H, uint const L, std::vector&lt; uint &gt; init=std::vector&lt; uint &gt;(qmc::n_bra, 0))</td></tr>
+<tr class="memitem:a0b4070ccb24446d75f3fa5dc12727443"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0b4070ccb24446d75f3fa5dc12727443"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>grid_class</b> (size_t const H, size_t const L, std::vector&lt; size_t &gt; init=std::vector&lt; size_t &gt;(qmc::n_bra, 0))</td></tr>
 <tr class="memitem:adfef488389dd8ba08976ff48b511b6e1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adfef488389dd8ba08976ff48b511b6e1"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>clear_check</b> ()</td></tr>
 <tr class="memitem:a8b81e16f891699a1408989d43b37263b"><td class="memTemplParams" colspan="2"><a class="anchor" id="a8b81e16f891699a1408989d43b37263b"></a>
 template&lt;typename F &gt; </td></tr>
-<tr class="memitem:a8b81e16f891699a1408989d43b37263b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>follow_loop_tpl</b> (<a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *const start, <a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a> &amp;bra, F fct)</td></tr>
+<tr class="memitem:a8b81e16f891699a1408989d43b37263b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>follow_loop_tpl</b> (<a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *const start, <a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a> &amp;bra, F fct)</td></tr>
 <tr class="memitem:a02e1a03801883d76acf33deda3b17b02"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a02e1a03801883d76acf33deda3b17b02"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>two_bond_flip</b> (<a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *const target, <a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *const old_partner, <a class="el" href="namespaceperimeter.html#ade3d85af6161b74db51130e1c57ebefc">bond_type</a> const &amp;b, <a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a> const &amp;state)</td></tr>
-<tr class="memitem:acb4ebbc3b27ff88388a1e7c8a7aa88ea"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acb4ebbc3b27ff88388a1e7c8a7aa88ea"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>two_bond_update_intern_2</b> (uint const &amp;i, uint const &amp;j, <a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a> const &amp;state, uint const &amp;tile)</td></tr>
-<tr class="memitem:ab8c69483a876f658e6ec84155ca91f6b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8c69483a876f658e6ec84155ca91f6b"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>two_bond_update_intern</b> (uint const &amp;i, uint const &amp;j, <a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a> const &amp;state)</td></tr>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>two_bond_flip</b> (<a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *const target, <a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *const old_partner, <a class="el" href="namespaceperimeter.html#ad546859be8269c613fb0be601d97dd60">bond_type</a> const &amp;b, <a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a> const &amp;state)</td></tr>
+<tr class="memitem:afe8f512869222415fdbc3e8695976d42"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afe8f512869222415fdbc3e8695976d42"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>two_bond_update_intern_2</b> (size_t const &amp;i, size_t const &amp;j, <a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a> const &amp;state, size_t const &amp;tile)</td></tr>
+<tr class="memitem:a132fc5af6eae2556371ad68dc297b0b0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a132fc5af6eae2556371ad68dc297b0b0"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>two_bond_update_intern</b> (size_t const &amp;i, size_t const &amp;j, <a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a> const &amp;state)</td></tr>
 <tr class="memitem:a5848ec2782585253df92e34faf48bc98"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5848ec2782585253df92e34faf48bc98"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>clear_tile_spin</b> ()</td></tr>
 <tr class="memitem:ab5a97a91764ed9173170e5ee0413010d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab5a97a91764ed9173170e5ee0413010d"></a>
@@ -144,15 +144,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>copy_to_ket</b> ()</t
 <tr class="memitem:a259ef5f1906ff21fc926d9ab89da2dbb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a259ef5f1906ff21fc926d9ab89da2dbb"></a>
 std::pair&lt; bool, double &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>init_loops</b> ()</td></tr>
 <tr class="memitem:a39cfacf0ecab3be7a66632abfc67d3ef"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a39cfacf0ecab3be7a66632abfc67d3ef"></a>
-<a class="el" href="namespaceperimeter.html#a25056c1acc78a479e966a858b29ae2d9">loop_type</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>n_loops</b> () const </td></tr>
+<a class="el" href="namespaceperimeter.html#aa699e5ef0f0785b355079c991b0ca0b4">loop_type</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>n_loops</b> () const </td></tr>
 <tr class="memitem:a96be8b0982c9c006a4aa72bedf76d2d1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a96be8b0982c9c006a4aa72bedf76d2d1"></a>
-<a class="el" href="namespaceperimeter.html#a25056c1acc78a479e966a858b29ae2d9">loop_type</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>n_neg_loops</b> () const </td></tr>
+<a class="el" href="namespaceperimeter.html#aa699e5ef0f0785b355079c991b0ca0b4">loop_type</a> const &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>n_neg_loops</b> () const </td></tr>
 <tr class="memitem:a62bfbb547e0d1681b56b89bcaa75a909"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a62bfbb547e0d1681b56b89bcaa75a909"></a>
 int const &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>sign</b> () const </td></tr>
 <tr class="memitem:ad29ae6627147c0b56a3dc4e98f71e114"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad29ae6627147c0b56a3dc4e98f71e114"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> (std::vector&lt; <a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a> &gt; state=std::vector&lt; <a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a> &gt;(), std::ostream &amp;os=std::cout) const </td></tr>
-<tr class="memitem:a2917d757e6556f7d662186ce30d72665"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2917d757e6556f7d662186ce30d72665"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>print_all</b> (std::vector&lt; <a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a> &gt; state=std::vector&lt; <a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a> &gt;(), uint flags=1, std::ostream &amp;os=std::cout) const </td></tr>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>print</b> (std::vector&lt; <a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a> &gt; state=std::vector&lt; <a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a> &gt;(), std::ostream &amp;os=std::cout) const </td></tr>
+<tr class="memitem:a2f2335c54863d5614e82f591a7ea8816"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2f2335c54863d5614e82f591a7ea8816"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>print_all</b> (std::vector&lt; <a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a> &gt; state=std::vector&lt; <a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a> &gt;(), size_t flags=1, std::ostream &amp;os=std::cout) const </td></tr>
 <tr class="memitem:a3dfd8f8dc1715d62677c0721ef69f699"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3dfd8f8dc1715d62677c0721ef69f699"></a>
 <a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>begin</b> ()</td></tr>
 <tr class="memitem:ace9141509868d9614e111ed107cd5774"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ace9141509868d9614e111ed107cd5774"></a>
@@ -164,32 +164,32 @@ template&lt;typename Archive &gt; </td></tr>
 <tr class="heading"><td colspan="2"><h2><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr class="memitem:aed6e557f050f6becbe6cf41ee4fe25a4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aed6e557f050f6becbe6cf41ee4fe25a4"></a>
-<a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b>alternator_</b></td></tr>
+<a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b>alternator_</b></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2><a name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
-<tr class="memitem:a8b7a173e3ec22f157790ebb542ed214f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8b7a173e3ec22f157790ebb542ed214f"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>init_grid</b> (std::vector&lt; uint &gt; const init)</td></tr>
+<tr class="memitem:ac9fa60fd5106d23e4c00b693ce6f70a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac9fa60fd5106d23e4c00b693ce6f70a1"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>init_grid</b> (std::vector&lt; size_t &gt; const init)</td></tr>
 <tr class="memitem:ab50cd2ff8c2f5ed10ba5f46a78ddfb62"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab50cd2ff8c2f5ed10ba5f46a78ddfb62"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>init_tile</b> ()</td></tr>
 <tr class="memitem:a0b13536540e0678394b7721eface3589"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0b13536540e0678394b7721eface3589"></a>
-<a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>next_in_loop</b> (<a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *const in, <a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a> &amp;bra)</td></tr>
+<a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>next_in_loop</b> (<a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> *const in, <a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a> &amp;bra)</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2><a name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:a6e413f40134911ed49f78dd4673d1b74"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6e413f40134911ed49f78dd4673d1b74"></a>
-uint const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classperimeter_1_1grid__class.html#a6e413f40134911ed49f78dd4673d1b74">H_</a></td></tr>
-<tr class="memdesc:a6e413f40134911ed49f78dd4673d1b74"><td class="mdescLeft">&#160;</td><td class="mdescRight">height <br/></td></tr>
-<tr class="memitem:a0911dbc407c6d7b30d37496846dca844"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0911dbc407c6d7b30d37496846dca844"></a>
-uint const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classperimeter_1_1grid__class.html#a0911dbc407c6d7b30d37496846dca844">L_</a></td></tr>
-<tr class="memdesc:a0911dbc407c6d7b30d37496846dca844"><td class="mdescLeft">&#160;</td><td class="mdescRight">length <br/></td></tr>
+<tr class="memitem:adf913c520c19c83ac31425d3f4bbd353"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf913c520c19c83ac31425d3f4bbd353"></a>
+size_t const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classperimeter_1_1grid__class.html#adf913c520c19c83ac31425d3f4bbd353">H_</a></td></tr>
+<tr class="memdesc:adf913c520c19c83ac31425d3f4bbd353"><td class="mdescLeft">&#160;</td><td class="mdescRight">height <br/></td></tr>
+<tr class="memitem:ac38a23ec267db9b6435ca37da7707ecf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac38a23ec267db9b6435ca37da7707ecf"></a>
+size_t const&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classperimeter_1_1grid__class.html#ac38a23ec267db9b6435ca37da7707ecf">L_</a></td></tr>
+<tr class="memdesc:ac38a23ec267db9b6435ca37da7707ecf"><td class="mdescLeft">&#160;</td><td class="mdescRight">length <br/></td></tr>
 <tr class="memitem:a5729d8ceae2412103be14dcd9e18d577"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5729d8ceae2412103be14dcd9e18d577"></a>
 array_type&lt; <a class="el" href="classperimeter_1_1grid__class.html#ab6d687d89e08c284454a43f032323684">site_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classperimeter_1_1grid__class.html#a5729d8ceae2412103be14dcd9e18d577">grid_</a></td></tr>
 <tr class="memdesc:a5729d8ceae2412103be14dcd9e18d577"><td class="mdescLeft">&#160;</td><td class="mdescRight">the actual grid <br/></td></tr>
 <tr class="memitem:a36804f8a7d74a4b02ea915f3100886e5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a36804f8a7d74a4b02ea915f3100886e5"></a>
-<a class="el" href="namespaceperimeter.html#a25056c1acc78a479e966a858b29ae2d9">loop_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b>n_loops_</b></td></tr>
+<a class="el" href="namespaceperimeter.html#aa699e5ef0f0785b355079c991b0ca0b4">loop_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b>n_loops_</b></td></tr>
 <tr class="memitem:a0c2075f4738a87a31c5b4f48fe866c94"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c2075f4738a87a31c5b4f48fe866c94"></a>
-<a class="el" href="namespaceperimeter.html#a25056c1acc78a479e966a858b29ae2d9">loop_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b>n_neg_loops_</b></td></tr>
+<a class="el" href="namespaceperimeter.html#aa699e5ef0f0785b355079c991b0ca0b4">loop_type</a>&#160;</td><td class="memItemRight" valign="bottom"><b>n_neg_loops_</b></td></tr>
 <tr class="memitem:aefe23c28683e43771d71305819d05028"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aefe23c28683e43771d71305819d05028"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>sign_</b></td></tr>
 <tr class="memitem:ad230803d69ba2704713683cdc40ff2a4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad230803d69ba2704713683cdc40ff2a4"></a>
@@ -204,7 +204,7 @@ shift_type&#160;</td><td class="memItemRight" valign="bottom"><b>shift_mode_</b>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 8 2013 11:38:13 for Perimeter QMC by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jul 8 2013 15:22:37 for Perimeter QMC by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1.2
 </small></address>

@@ -116,21 +116,21 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a5781ab83036bdd965cecbda12bb640c6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5781ab83036bdd965cecbda12bb640c6"></a>
 typedef int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceperimeter.html#a5781ab83036bdd965cecbda12bb640c6">spin_type</a></td></tr>
 <tr class="memdesc:a5781ab83036bdd965cecbda12bb640c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">the spin type, for now just an int <br/></td></tr>
-<tr class="memitem:a25056c1acc78a479e966a858b29ae2d9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a25056c1acc78a479e966a858b29ae2d9"></a>
-typedef uint&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceperimeter.html#a25056c1acc78a479e966a858b29ae2d9">loop_type</a></td></tr>
-<tr class="memdesc:a25056c1acc78a479e966a858b29ae2d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">used for the loop label <br/></td></tr>
-<tr class="memitem:ade3d85af6161b74db51130e1c57ebefc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ade3d85af6161b74db51130e1c57ebefc"></a>
-typedef uint&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceperimeter.html#ade3d85af6161b74db51130e1c57ebefc">bond_type</a></td></tr>
-<tr class="memdesc:ade3d85af6161b74db51130e1c57ebefc"><td class="mdescLeft">&#160;</td><td class="mdescRight">based on bond_enum, but since the enum is not usable as an index, its an uint <br/></td></tr>
+<tr class="memitem:aa699e5ef0f0785b355079c991b0ca0b4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa699e5ef0f0785b355079c991b0ca0b4"></a>
+typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceperimeter.html#aa699e5ef0f0785b355079c991b0ca0b4">loop_type</a></td></tr>
+<tr class="memdesc:aa699e5ef0f0785b355079c991b0ca0b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">used for the loop label <br/></td></tr>
+<tr class="memitem:ad546859be8269c613fb0be601d97dd60"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad546859be8269c613fb0be601d97dd60"></a>
+typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceperimeter.html#ad546859be8269c613fb0be601d97dd60">bond_type</a></td></tr>
+<tr class="memdesc:ad546859be8269c613fb0be601d97dd60"><td class="mdescLeft">&#160;</td><td class="mdescRight">based on bond_enum, but since the enum is not usable as an index, its an size_t <br/></td></tr>
 <tr class="memitem:ac2f7c0bb619b1565b2f5c80a2226203a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2f7c0bb619b1565b2f5c80a2226203a"></a>
 typedef std::bitset<br class="typebreak"/>
 &lt; qmc::n_states &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceperimeter.html#ac2f7c0bb619b1565b2f5c80a2226203a">check_type</a></td></tr>
-<tr class="memdesc:ac2f7c0bb619b1565b2f5c80a2226203a"><td class="mdescLeft">&#160;</td><td class="mdescRight">used for the check variable. a bool would also work, but an uint8_t needs the same space and provides more option <br/></td></tr>
-<tr class="memitem:ac6881522b81bd04c2842e77f7b6c5567"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac6881522b81bd04c2842e77f7b6c5567"></a>
-typedef uint&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a></td></tr>
-<tr class="memdesc:ac6881522b81bd04c2842e77f7b6c5567"><td class="mdescLeft">&#160;</td><td class="mdescRight">names the type of the state. again, casting from and to enum all the time would be cumbersome <br/></td></tr>
-<tr class="memitem:a22ffda4fa4b0fbfebefa0baaa544a38b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a22ffda4fa4b0fbfebefa0baaa544a38b"></a>
-typedef uint&#160;</td><td class="memItemRight" valign="bottom"><b>shift_type</b></td></tr>
+<tr class="memdesc:ac2f7c0bb619b1565b2f5c80a2226203a"><td class="mdescLeft">&#160;</td><td class="mdescRight">used for the check variable. a bool would also work, but an size_t8_t needs the same space and provides more option <br/></td></tr>
+<tr class="memitem:a2564b97be835342bd9dc4907136c319e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2564b97be835342bd9dc4907136c319e"></a>
+typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a></td></tr>
+<tr class="memdesc:a2564b97be835342bd9dc4907136c319e"><td class="mdescLeft">&#160;</td><td class="mdescRight">names the type of the state. again, casting from and to enum all the time would be cumbersome <br/></td></tr>
+<tr class="memitem:a7ad082a894aa54826569358a741ff183"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7ad082a894aa54826569358a741ff183"></a>
+typedef size_t&#160;</td><td class="memItemRight" valign="bottom"><b>shift_type</b></td></tr>
 <tr class="memitem:a8865050e49e9e8c0b048cb1ca2ea11c7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8865050e49e9e8c0b048cb1ca2ea11c7"></a>
 typedef <a class="el" href="structperimeter_1_1tile__struct.html">tile_struct</a><br class="typebreak"/>
 &lt; <a class="el" href="structperimeter_1_1site__struct.html">site_struct</a>, qmc::n_bonds &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>tile_type</b></td></tr>
@@ -147,7 +147,7 @@ std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operato
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 8 2013 11:38:13 for Perimeter QMC by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jul 8 2013 15:22:37 for Perimeter QMC by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1.2
 </small></address>

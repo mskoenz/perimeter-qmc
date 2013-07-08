@@ -101,7 +101,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a96d34483e37a7835bec0d377d53c183c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a96d34483e37a7835bec0d377d53c183c"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>sim_class</b> (map_type const &amp;param)</td></tr>
 <tr class="memitem:aec149eac1367b28882e1dbb52fd70ddf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aec149eac1367b28882e1dbb52fd70ddf"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>two_bond_update</b> (index_type i, index_type j, <a class="el" href="namespaceperimeter.html#ac6881522b81bd04c2842e77f7b6c5567">state_type</a> state, int t=-1)</td></tr>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>two_bond_update</b> (index_type i, index_type j, <a class="el" href="namespaceperimeter.html#a2564b97be835342bd9dc4907136c319e">state_type</a> state, int t=-1)</td></tr>
 <tr class="memitem:a28bed1eef8aae07509b4214d1eb6a8ef"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28bed1eef8aae07509b4214d1eb6a8ef"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>spin_update</b> ()</td></tr>
 <tr class="memitem:aecb61e56429e21c27ec3bb1ad59aee3b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aecb61e56429e21c27ec3bb1ad59aee3b"></a>
@@ -115,7 +115,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>run</b> ()</td></tr>
 <tr class="memitem:a714a1dfbe16d23bc225e86c8c9068486"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a714a1dfbe16d23bc225e86c8c9068486"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>present_data</b> ()</td></tr>
 <tr class="memitem:a804f6a16be83ec9612f895380b6e04f5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a804f6a16be83ec9612f895380b6e04f5"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>get_bond</b> (<a class="el" href="structperimeter_1_1site__struct.html">site_type</a> const &amp;s, <a class="el" href="namespaceperimeter.html#ade3d85af6161b74db51130e1c57ebefc">bond_type</a> const &amp;dir, bool const &amp;spin_up)</td></tr>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>get_bond</b> (<a class="el" href="structperimeter_1_1site__struct.html">site_type</a> const &amp;s, <a class="el" href="namespaceperimeter.html#ad546859be8269c613fb0be601d97dd60">bond_type</a> const &amp;dir, bool const &amp;spin_up)</td></tr>
 <tr class="memitem:ab8c5ffc385051a48a506c4ff9ba042c7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8c5ffc385051a48a506c4ff9ba042c7"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>simuviz_frame</b> (bool const &amp;spin_up=false)</td></tr>
 <tr class="memitem:acde991019b85f1b575ea0ccbab15c992"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acde991019b85f1b575ea0ccbab15c992"></a>
@@ -128,10 +128,10 @@ template&lt;typename Archive &gt; </td></tr>
 Public Attributes</h2></td></tr>
 <tr class="memitem:a3233e11364ca81885bf0823502766333"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3233e11364ca81885bf0823502766333"></a>
 map_type&#160;</td><td class="memItemRight" valign="bottom"><b>param_</b></td></tr>
-<tr class="memitem:a7731110e63ad3f76538451cbc9538f1c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7731110e63ad3f76538451cbc9538f1c"></a>
-const uint&#160;</td><td class="memItemRight" valign="bottom"><b>H_</b></td></tr>
-<tr class="memitem:a3e0f1b4bf9b7f074e4738d37f0209b7f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3e0f1b4bf9b7f074e4738d37f0209b7f"></a>
-const uint&#160;</td><td class="memItemRight" valign="bottom"><b>L_</b></td></tr>
+<tr class="memitem:a44b54bba051a44f2d57e1280952913d9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a44b54bba051a44f2d57e1280952913d9"></a>
+const size_t&#160;</td><td class="memItemRight" valign="bottom"><b>H_</b></td></tr>
+<tr class="memitem:a671dcd91a30556e8bd6d049cce5bd359"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a671dcd91a30556e8bd6d049cce5bd359"></a>
+const size_t&#160;</td><td class="memItemRight" valign="bottom"><b>L_</b></td></tr>
 <tr class="memitem:ad17d7f310281871d297cc1b132134d3d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad17d7f310281871d297cc1b132134d3d"></a>
 <a class="el" href="classperimeter_1_1grid__class.html">grid_class</a>&#160;</td><td class="memItemRight" valign="bottom"><b>grid_</b></td></tr>
 <tr class="memitem:a07f16970f6a2c12fc9d3ce22d86197c3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a07f16970f6a2c12fc9d3ce22d86197c3"></a>
@@ -165,7 +165,7 @@ addon::bash_parameter_class::map_type&#160;</td><td class="memItemRight" valign=
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 8 2013 11:38:13 for Perimeter QMC by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jul 8 2013 15:22:37 for Perimeter QMC by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1.2
 </small></address>

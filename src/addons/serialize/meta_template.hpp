@@ -5,6 +5,8 @@
 #ifndef __META_TEMPLATE_HEADER
 #define __META_TEMPLATE_HEADER
 
+#include <type_traits>
+
 //------------------- mtp stuff -------------------
 template<typename T>
 struct is_const {
