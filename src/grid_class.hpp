@@ -71,6 +71,8 @@ namespace perimeter {
             init_tile();
             
             init_loops();
+            
+            copy_to_ket();
         }
         void clear_check(){
             std::for_each(begin(), end(), 
@@ -179,30 +181,53 @@ namespace perimeter {
             return grid_[i][j];
         }
         
-        void init_loops() {
+        std::pair<bool, double> init_loops() { //returns true if sign == -1 and the amount of negative loops
             n_loops_ = 0;
+            n_neg_loops_ = 0;
+            sign_ = +1;
+            int subsign = +1;
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra)
                 std::for_each(begin(), end(), 
                     [&](site_type & s) {
                         if(s.check[bra] == false) {
+                            subsign = +1;
                             alternator_ = bra;
                             auto old_bra = bra;
                             follow_loop_tpl(&s, bra, 
                                 [&](site_type * next){
                                     next->check[bra] = true;
                                     next->loop[bra] = n_loops_;
+                                    if(alternator_ == bra) {
+                                        if(next->bond[alternator_] > qmc::n_bonds / 2)
+                                            subsign *= -1;
+                                    }
+                                    else
+                                        if(next->bond[alternator_] <= qmc::n_bonds / 2)
+                                            subsign *= -1;
+                                        
                                 }
                             );
                             assert(old_bra == bra);
                             //~ std::cout << "loop " << n_loops_ << " done " << bra << std::endl;
                             ++n_loops_;
+                            if(subsign == -1) {
+                                ++n_neg_loops_;
+                                sign_ *= -1;
+                            }
                         }
                     }
                 );
             clear_check();
+            return std::make_pair(sign_ == -1, n_neg_loops_/n_loops_);
         }
-        loop_type n_loops() {
+        loop_type const & n_loops() const {
             return n_loops_;
+        }
+        loop_type const & n_neg_loops() const {
+            return n_neg_loops_;
+        }
+        int const & sign() const {
+            return sign_;
         }
         //=================== print and iterate ===================
         void print(std::vector<state_type> state = std::vector<state_type>(), std::ostream & os = std::cout) const {
@@ -375,6 +400,8 @@ namespace perimeter {
         array_type<site_type> grid_; ///< the actual grid
         
         loop_type n_loops_;
+        loop_type n_neg_loops_;
+        int sign_;
     public:
         state_type alternator_;
     private:

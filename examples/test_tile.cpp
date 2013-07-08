@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 
     addon::parameter.set("H", 4);
     addon::parameter.set("L", 4);
-    addon::parameter.set("shift_file", "16x16_shift.txt");
+    addon::parameter.set("shift", "shift.txt");
     addon::parameter.set("res_file", "results.txt");
     
     
@@ -31,9 +31,7 @@ int main(int argc, char* argv[])
     addon::parameter.set("sim", addon::parameter["mult"] * 1000000);
     
     sim_class sim(addon::parameter.get());
-    
     grid_class & g(sim.grid());
-    
     //~ g(1, 0).spin[0] = 0;
     //~ g(1, 1).spin[0] = 1;
     
@@ -42,29 +40,35 @@ int main(int argc, char* argv[])
     //~ std::cout << g(1, 0).tile_update(0, 1) << std::endl;
     //~ std::cout << g(1, 2).tile_update(0, 1) << std::endl;
     
-    char i, j, t;
+    char i, j, s, t, w;
     
     while(i!=10) {
-        cin >> i >> j >> t;
+        cin >> i >> j >> s >> w >> t;
         i-='0';
         j-='0';
+        s-='0';
+        w-='0';
         t-='0';
         if(t == 'r'-'0')
-            sim.two_bond_update(sim.rngH_(), sim.rngL_(), 1);
+            //~ sim.two_bond_update(sim.rngH_(), sim.rngL_(), 1);
+            sim.two_bond_update(i, j, s, w);
         else if(t == 'l'-'0')
             g.init_loops();
-        else if(t == 'c'-'0')
+        else if(t == 'c'-'0') {
+            g.copy_to_ket();
+            g.init_loops();
             g.clear_tile_spin();
+        }
         else if(t == 's'-'0')
-            g(i, j).spin[0] = qmc::invert_spin - g(i, j).spin[0];
+            g(i, j).spin[s] = qmc::invert_spin - g(i, j).spin[s];
         else if(t == 'u'-'0')
             sim.update();
-        else
-            g(i, j).tile_update(0, 0);
+        //~ else
+            //~ g(i, j).tile_update(0, 0);
             //~ g(i, j).tile_update(0, t);
         
-        g.print({1});
-        g.print_all({1}, addon::parameter["f"]);
+        g.print({0});
+        g.print_all({0}, addon::parameter["f"]);
     }
     
     //~ g(2, 3).spin[0] = 0;

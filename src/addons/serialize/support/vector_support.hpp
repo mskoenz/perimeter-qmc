@@ -24,7 +24,7 @@ S & operator<<(S & os, std::vector<T> const & arg) {
 namespace addon {
     template<typename T, typename Archive>
     void serialize(Archive & ar, std::vector<T> & arg) {
-        typedef typename ustd::vector<T>::size_type size_type;
+        typedef typename std::vector<T>::size_type size_type;
         size_type size_ = arg.size();
         ar & size_;
         if(Archive::type == archive_enum::input) {

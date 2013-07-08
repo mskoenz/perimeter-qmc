@@ -40,23 +40,49 @@ namespace perimeter {
                                             , rngL_(L_)
                                             {
                                                 
-            //~ shift_region_class sr_(param_["shift"]);
+            shift_region_class sr_(param_["shift"]);
             //~ sr_.set_grow(std::vector<bond_type>(1, qmc::right));
-            shift_region_class sr_(H_, L_, param_["spacing"]);
-            sr_.grow_partial(param_["g"]);
-            sr_.write(param_["shift"]);
+            //~ shift_region_class sr_(H_, L_, param_["spacing"]);
+            //~ sr_.grow_partial(param_["g"]);
+            //~ sr_.write(param_["shift"]);
             grid_.set_shift_region(sr_);
+            
+            for(uint i = 0; i < H_; i += 4) {
+                for(uint j = 0; j < L_; j+= 4) {
+                    //~ two_bond_update(i+3, j+1, 0, 1);
+                    //~ two_bond_update(i+3, j+3, 0, 1);
+                    //~ two_bond_update(i+3, j+3, 1, 1);
+                    //~ two_bond_update(i+3, j+2, 0, 1);
+                    //~ two_bond_update(i+2, j+1, 1, 1);
+                    //~ grid_(i+2, j+1).spin[0] = qmc::invert_spin - grid_(i+2, j+1).spin[0];
+                    //~ grid_(i+1, j+1).spin[0] = qmc::invert_spin - grid_(i+1, j+1).spin[0];
+                    //~ grid_.clear_tile_spin();
+                    //~ grid_.copy_to_ket();
+                    //~ two_bond_update(i+2, j+1, 1, 0);
+                    //~ grid_(i+2, j+2).spin[0] = qmc::invert_spin - grid_(i+2, j+2).spin[0];
+                    //~ grid_(i+1, j+1).spin[0] = qmc::invert_spin - grid_(i+1, j+1).spin[0];
+                    //~ grid_.clear_tile_spin();
+                    //~ grid_.copy_to_ket();
+                    //~ two_bond_update(i+1, j+1, 0, 2);
+                }
+            }
+            
+            grid_.clear_tile_spin();
+            grid_.copy_to_ket();
         }
         
-        bool two_bond_update(index_type i, index_type j, state_type state) {
+        bool two_bond_update(index_type i, index_type j, state_type state, int t = -1) {
             if(qmc::n_bonds == qmc::tri)
-                return grid_.two_bond_update_intern_2(i, j, state, int(rngS_() * 3));
+                if(t == -1)
+                    return grid_.two_bond_update_intern_2(i, j, state, int(rngS_() * 3));
+                else
+                    return grid_.two_bond_update_intern_2(i, j, state, t);
             else
                 return grid_.two_bond_update_intern_2(i, j, state, 0);
         }
         
         void spin_update() {
-            //~ DEBUG_MSG("init loops")
+            
             grid_.init_loops();
             //~ DEBUG_MSG("start spin")
             for(state_type bra = qmc::start_state; bra < qmc::n_bra; ++bra) {
@@ -94,7 +120,6 @@ namespace perimeter {
         }
         
         void update() {
-            grid_.copy_to_ket();
             grid_.set_shift_mode(qmc::no_shift);
             
             grid_.clear_tile_spin();
@@ -111,16 +136,26 @@ namespace perimeter {
             
             grid_.set_shift_mode(qmc::ket_preswap);
             spin_update();
-            //~ grid_.init_loops();
+            grid_.copy_to_ket();
         }
         
         void measure() {
+            int sign = grid_.sign();
             double loops = grid_.n_loops();
+            double neg_loops = grid_.n_neg_loops();
             data_["loops"] << loops;
             data_["overlap"] << pow(2.0, loops - 2*H_*L_* .5 );
             grid_.set_shift_mode(qmc::ket_swap);
             grid_.init_loops();
+            //~ if(sign != grid_.sign() and grid_.n_loops() > 13) {
+                //~ grid_.print_all({0, 1}, 7);
+                //~ DEBUG_VAR(sign)
+                //~ DEBUG_VAR(grid_.sign())
+            //~ }
+            
             //~ grid_.eco_init_loops();
+            data_["sign"] << (grid_.sign() == 1);
+            data_["neg_loops"] << grid_.n_neg_loops()/(double)grid_.n_loops();
             data_["swap_loops"] << grid_.n_loops();
             data_["swap_overlap"] << pow(2.0, int(grid_.n_loops()) - loops);
             data_["mean_for_error"] << pow(2.0, int(grid_.n_loops()) - loops);
@@ -144,11 +179,12 @@ namespace perimeter {
             addon::timer_class<addon::data> timer(param_["term"] + param_["sim"], param_["res"]);
             timer.set_names("seed"
                           , "H"
-                          , "L"
+                          , "sign"
                           , "sim"
                           , "x"
                           , "preswap_entropy"
-                          , "accept"
+                          //~ , "accept"
+                          , "neg_loops"
                           , "loop_time[us]"
                           , "entropy"
                           , "error"
@@ -200,7 +236,6 @@ namespace perimeter {
                         }
                     }
                 }
-                
                 write_bins(bins, mean_file);
                 timer.write_state(param_["term"] + param_["sim"]);
             }
@@ -210,11 +245,12 @@ namespace perimeter {
             
             timer.write(addon::global_seed.get()
                         , H_
-                        , L_
+                        , data_["sign"].mean()
                         , param_["sim"]
                         , param_["g"]
                         , -std::log(data_["swap_overlap"].mean())
-                        , accept_.mean()
+                        //~ , accept_.mean()
+                        , data_["neg_loops"].mean()
                         , timer.loop_time()
                         , jack.first
                         , jack.second
@@ -300,7 +336,7 @@ namespace perimeter {
             ar & grid_;
             ar & data_;
         }
-    private:
+    //~ private:
         map_type param_;
         const uint H_;
         const uint L_;

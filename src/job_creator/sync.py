@@ -8,10 +8,12 @@
 import sys
 
 from addon import *
+import shift
 
 import os
 import shutil
 import glob
+import copy
 
 loc = ord('A') - 1
 idx_list = []
@@ -205,7 +207,7 @@ def delete_files(path, dirs, files):
         recursion(path, dirs, fct)
 #------------------- bash files ------------------- 
 def write_bash_file(path_dir):
-    args = parameter["arg"];
+    args = parameter["args"];
     ofs = open(path_dir + "/bash_in.txt", "w")
     
     ofs.write(parameter["bash"] + " ")
@@ -218,12 +220,32 @@ def write_bash_file(path_dir):
         else:
             ofs.write("-" + arg + " " + str(idx_list[i]) + " ")
     
+    ofs.write("-shift shift.txt ")
     ofs.write("\n")
     ofs.close()
+    
+    
+    path_dir + "/shift.txt"
+    shift.read_base_file(parameter["shift"])
+    shift.max_steps(idx_list[0], idx_list[0])
+    #~ shift.multiply(idx_list[0]/shift.H, idx_list[0]/shift.L)
+    shift.grow(idx_list[1])
+    
+    if idx_list[1] != 0:
+        bash("cp temp.txt " + path_dir + "/shift.txt")
+    else:
+        shift.write_shift_reagion(path_dir + "/shift.txt")
+        
+    shift.write_shift_reagion(path_dir + "/shift.txt", "a")
+    shift.write_shift_reagion("temp.txt", "w")
+    #~ shift.print_shift_reagion()
+    
+    
     CYAN("bash file nr " + str(idx_list) + " written")
 #------------------- recursion forward ------------------- 
 def write_bash_files(path, dirs):
     recursion(path, dirs, write_bash_file)
+    bash("rm temp.txt")
 #------------------- prog start -------------------
 def launch_program(path_dir, prog):
     if not exists(path_dir + "/state.txt"):
@@ -255,9 +277,27 @@ def deviders(num):
             res.append(i)
     return res
 
-spacing = lambda size: 1./min(deviders(size), key=lambda x: abs(size/x - 10))
+spacing = lambda size: 1./min(deviders(size), key=lambda x: abs(size/x - 8))
+
+def shift_root(ll, root, dirs):
+    for idx in ll:
+        for s in dirs:
+            if s[0] == idx:
+                dirs = s[1]
+                break;
+    temp = dirs;
+    parameter["sel"] = root
+    for idx in reversed(ll):
+        global loc
+        loc += 1
+        parameter["sel"] += "/" + chr(loc) + "-" + str_elegant(idx)
+        temp = [[idx, temp]]
+    
+    root = parameter["sel"]
+    return root, dirs
 #=================== main ===================
 def main():
+    global loc
     CLRSCR("")
     
     parameter.read(sys.argv)
@@ -295,45 +335,44 @@ def main():
     
     if "sel" in parameter.keys():
         ll = eval(parameter["sel"])
-        for idx in ll:
-            for s in dirs:
-                if s[0] == idx:
-                    dirs = s[1]
-                    break;
-        temp = dirs;
-        parameter["sel"] = root
-        for idx in reversed(ll):
-            global loc
-            loc += 1
-            parameter["sel"] += "/" + chr(loc) + "-" + str_elegant(idx)
-            temp = [[idx, temp]]
+        root, dirs = shift_root(ll, root, dirs)
+    
+    if "split" in parameter.keys():
+        split = [[x[0]] for x in dirs]
+    else:
+        split = [[]]
+    
+    old_root = copy.deepcopy(root);
+    old_dirs = copy.deepcopy(dirs);
+    old_loc = loc
+    
+    for sub in split:
+        loc = old_loc
+        root, dirs = shift_root(sub, old_root, old_dirs)
+        print(root)
+    
+        bash_if("j", "sqjobs")
+        bash_if("l", "cat run.log")
+        bash_if("s", lambda:read_state_files(root, dirs))
         
-        root = parameter["sel"]
-    
-    bash_if("j", "sqjobs")
-    bash_if("l", "cat run.log")
-    bash_if("s", lambda:read_state_files(root, dirs))
-    
-    bash_if("c", lambda:collect_results(root, dirs))
-    bash_if("p", "./plotv2.py " + root + "/colres.txt -p -x X -y Entropy -err Error -acc -sp 1 -o " + root + "/plot.svg")
-    
-    bash_if("clean", lambda:( rmfolder(root)
-                            , bash("rm *.log")
-                            , bash("rm *.png")
-                            , bash("rm *.txt")
-                            , bash("cd ../project/build;  make clean")
-                            ))
-    bash_if("comp", "cd ../project/build; cmake ../ " + parameter["cmake"] + "; make sim")
-    bash_if("make", lambda: ( mkfolder(root)
-                            , mkfolders(root, dirs)
-                            , cp_to_folders(files, root, dirs)
-                            , write_bash_files(root, dirs)
-                            ))
-    bash_if("del", lambda: ( delete_files(root, dirs, ["sim"]) ))
-    bash_if("run", lambda:launch_programs("sim", root, dirs))
-    
-    bash_if("kill", lambda:kill_programs(1583456, 1583458))
-    
+        bash_if("c", lambda:collect_results(root, dirs))
+        bash_if("p", "./plotv2.py " + root + "/colres.txt -p -x X -y Entropy -err Error -acc -sp 1 -o " + root + "/plot.svg")
+        
+        bash_if("clean", lambda:( rmfolder(root)
+                                , bash("rm *.log")
+                                , bash("cd ../project/build;  make clean")
+                                ))
+        bash_if("comp", "cd ../project/build; cmake ../ " + parameter["cmake"] + "; make sim")
+        bash_if("make", lambda: ( mkfolder(root)
+                                , mkfolders(root, dirs)
+                                , cp_to_folders(files, root, dirs)
+                                , write_bash_files(root, dirs)
+                                ))
+        bash_if("del", lambda: ( delete_files(root, dirs, ["sim"]) ))
+        bash_if("run", lambda:launch_programs("sim", root, dirs))
+        
+        bash_if("kill", lambda:kill_programs(1583456, 1583458))
+        
 
 if __name__ == "__main__":
     print("min_plot.py")

@@ -108,7 +108,7 @@ def main():
     global N, L, labels, data
     p = parameter
     p["o"] = "plot.svg"
-    
+    p["legend"] = "best"
     parameter.read(sys.argv)
     files = p["arg"]
     #------------------- check if filenames are given ------------------- 
@@ -133,8 +133,10 @@ def main():
         return True
     #------------------- plot output if -p is given ------------------- 
     if p.contains("p") and p.contains("x") and p.contains("y"):
-        colors = col.deque(["r^-", "b^-", "y^-", "g^-", "m^-", "c^-", "k^-"])
-        #~ colors = col.deque(["r-", "b-", "y-", "g-", "m-", "c-", "k-", "r--"])
+        if p.contains("lin"):
+            colors = col.deque(["r^", "r-", "b^", "b-", "y^", "y-", "g^", "g-", "m^", "m-", "c^", "c-", "k^", "k-"])
+        else:
+            colors = col.deque(["r^-", "b^-", "y^-", "g^-", "m^-", "c^-", "k^-"])
         
         ax = pylab.subplot(111)
         
@@ -169,14 +171,20 @@ def main():
             pd = [];
             
             
-            
+            #------------------- accumulate y and err data ------------------- 
             if p.contains("acc"):
                 data[p["y_"]] = np.add.accumulate(data[p["y_"]])
                 if p.contains("err_"):
                     errmean = np.mean(data[p["err_"]])
                     #~ data[p["err_"]] = np.add.accumulate(data[p["err_"]])
                     data[p["err_"]] = np.sqrt(np.add.accumulate(np.square(data[p["err_"]])))
-                
+            if p.contains("dif"):
+                data[p["y_"]] -= data[p["dif"]]
+                data[p["err_"]] = np.sqrt(np.square(data[p["err_"]] + np.square(data[p["dif"]+1])))
+            
+            #~ for i in range(len(data[p["y_"]])):
+                #~ print(str(data[p["y_"]][i]) + " " + str(data[p["err_"]][i]))
+            
             for l in range(L):
                 pd.append(get_range(data[l])) #get the datarange that needs to be plotted
                 
@@ -208,9 +216,16 @@ def main():
                           #, ecolor = "b"
                           )
             colors.rotate(-1)
+            
+            if p.contains("lin"):
+                m,b = np.polyfit(pd[p["x_"]], pd[p["y_"]], 1) 
+                x = pd[p["x_"]][1:]
+                x[0]=0
+                ax.plot(x, m*x+b, colors[0]) 
+                colors.rotate(-1)
         #------------------- legend ------------------- 
         if len(files) > 1:
-            leg = pylab.legend(loc = 8
+            leg = pylab.legend(loc = p["legend"]
                              , ncol = 3
                              , fancybox = True
                              , prop={'size':12}
@@ -233,8 +248,24 @@ def main():
                       , verticalalignment='top'
                       , bbox=dict(boxstyle='round', facecolor='white', alpha=0.5)
                       )
+            if p.contains("lin"):
+                text  = ""
+                text += "{0}: {1:.3f}\n".format("m", m)
+                text += "{0}: {1:.3f}".format("b", b)
+                ax.text(0.37
+                      , 0.22
+                      , text
+                      , transform=ax.transAxes
+                      , fontsize=12
+                      , verticalalignment='top'
+                      , bbox=dict(boxstyle='round', facecolor='white', alpha=0.5)
+                      )
         if p.contains("acc"):
             pylab.xlim([pd[p["x_"]][0], pd[p["x_"]][-1]])
+        
+        #~ pylab.xlim(0, 1.2)
+        #~ pylab.ylim(-1.2, .9)
+            
         pylab.savefig(p["o"])
         GREENB(p["o"] + " is done")
     

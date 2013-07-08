@@ -2,8 +2,6 @@
 // Date:    06.05.2013 12:07:06 EDT
 // File:    sim.cpp
 
-#include <progress_save_msk.hpp>
-#include <serialize.hpp>
 #include <iostream>
 #include <bash_parameter3_msk.hpp>
 #include <sim_class.hpp>
@@ -13,7 +11,7 @@ using namespace perimeter;
 
 int main(int argc, char* argv[])
 {
-    //~ addon::global_seed.set(0);
+    addon::global_seed.set(0);
     
     auto & p = addon::parameter;
     p["init0"] = 0;

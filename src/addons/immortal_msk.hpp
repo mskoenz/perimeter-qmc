@@ -14,9 +14,12 @@ namespace addon {
     public:
         //------------------- ctors -------------------
         immortal_class(): file_switch_(2) //"invalid" at start
-                        , data_file_({"immortal1.bin", "immortal2.bin"})
-                        , index_file_({"immortal3.bin", "immortal4.bin"})
                         , index_(0) {
+                            
+            data_file_[0] = "immortal1.bin";
+            data_file_[1] = "immortal2.bin";
+            index_file_[0] = "immortal3.bin";
+            index_file_[1] = "immortal4.bin";
             d_arch_[0].set_name(data_file_[0]);
             d_arch_[1].set_name(data_file_[1]);
         }

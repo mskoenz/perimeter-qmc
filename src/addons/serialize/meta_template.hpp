@@ -25,20 +25,21 @@ struct is_class {
 
 template<typename T>
 struct is_array {
-    static T t;
+    //~ static T t;
+    //~ 
+    //~ template<int N> struct wrap {typedef char type;};
+    //~ template<typename U> static U * ptr(U u[]);
+    //~ template<typename U> static U ptr(U u);
+    //~ 
+    //~ template<typename U> static typename wrap<sizeof(t = ptr(t))>::type check(int);
+    //~ template<typename U> static double check(...);
     
-    template<int N> struct wrap {typedef char type;};
-    template<typename U> static U * ptr(U u[]);
-    template<typename U> static U ptr(U u);
-    
-    template<typename U> static typename wrap<sizeof(t = ptr(t))>::type check(int);
-    template<typename U> static double check(...);
-    
-    enum{value = (sizeof(double) == sizeof(check<T>(int())))};
+    //~ enum{value = (sizeof(double) == sizeof(check<T>(int())))};
+    enum{value = std::is_array<T>::value};
 };
-template<typename T> //remove constness before doing array checks since const i = j is also illegal
-struct is_array<T const> {
-    enum{value = is_array<T>::value};
-};
+//~ template<typename T> //remove constness before doing array checks since const i = j is also illegal
+//~ struct is_array<T const> {
+    //~ enum{value = is_array<T>::value};
+//~ };
 
 #endif //__META_TEMPLATE_HEADER
