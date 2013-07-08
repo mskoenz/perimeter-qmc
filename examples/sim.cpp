@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 
     p["H"] = 16;
     p["L"] = 16;
-    p["shift"] = "shift.txt";
+    p["shift"] = "../examples/shift.txt";
     p["spacing"] = 1;
     p["res"] = "results.txt";
     p["timer_dest"] = 1;
